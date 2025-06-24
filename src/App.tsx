@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Minus, Plus, User, ArrowLeft, HelpCircle, Crown, Skull, Home } from 'lucide-react';
-import { WordManagementModal } from './components/WordManagementModal';
+import { Minus, Plus, User, ArrowLeft, HelpCircle, Crown, Skull, RotateCcw } from 'lucide-react';
 import { WordService } from './services/wordService';
-import type { GamePhase, PlayerRole, Player, GameState } from './types/gameTypes';
+import { WordManagementModal } from './components/WordManagementModal';
+import type { GamePhase, PlayerRole, Player, GameState, WordPair } from './types/gameTypes';
 
 function App() {
   const [totalPlayers, setTotalPlayers] = useState(3);
@@ -18,10 +18,11 @@ function App() {
   const [showNameModal, setShowNameModal] = useState(false);
   const [showWordModal, setShowWordModal] = useState(false);
   const [showTurnModal, setShowTurnModal] = useState(false);
-  const [showPlayerTurnModal, setShowPlayerTurnModal] = useState(false);
   const [showEliminationModal, setShowEliminationModal] = useState(false);
   const [showMrWhiteGuessModal, setShowMrWhiteGuessModal] = useState(false);
+  const [showGameOverModal, setShowGameOverModal] = useState(false);
   const [showWordManagementModal, setShowWordManagementModal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [gameState, setGameState] = useState<GameState>({
     phase: 'setup',
@@ -62,96 +63,56 @@ function App() {
     }
   }, [totalPlayers, mrWhite]);
 
-  // Show player turn modal when starting card selection
-  useEffect(() => {
-    if (gameState.phase === 'card-selection' && gameState.currentPlayerIndex === 0 && gameState.round === 1) {
-      setShowPlayerTurnModal(true);
-    }
-  }, [gameState.phase, gameState.currentPlayerIndex, gameState.round]);
-
-  // Generate sequence-based player order with Mr. White restriction
-  const generatePlayerOrder = (totalPlayers: number, players: Player[]): number[] => {
-    let attempts = 0;
-    const maxAttempts = 100; // Prevent infinite loop
-    
-    while (attempts < maxAttempts) {
-      const startPlayer = Math.floor(Math.random() * totalPlayers) + 1;
-      const isForward = Math.random() < 0.5;
-      const order: number[] = [];
-      
-      if (isForward) {
-        for (let i = 0; i < totalPlayers; i++) {
-          const playerNum = ((startPlayer - 1 + i) % totalPlayers) + 1;
-          order.push(playerNum);
-        }
-      } else {
-        for (let i = 0; i < totalPlayers; i++) {
-          let playerNum = startPlayer - i;
-          if (playerNum <= 0) {
-            playerNum = totalPlayers + playerNum;
-          }
-          order.push(playerNum);
-        }
-      }
-      
-      // Check if first player is Mr. White
-      const firstPlayerId = order[0];
-      const firstPlayer = players.find(p => p.id === firstPlayerId);
-      
-      // If first player is not Mr. White, or if there's no Mr. White in the game, use this order
-      if (!firstPlayer || firstPlayer.role !== 'mrwhite') {
-        return order;
-      }
-      
-      attempts++;
-    }
-    
-    // Fallback: if we can't generate a valid order, manually ensure Mr. White is not first
+  // Generate sequence-based player order
+  const generatePlayerOrder = (totalPlayers: number): number[] => {
     const startPlayer = Math.floor(Math.random() * totalPlayers) + 1;
+    const isForward = Math.random() < 0.5;
     const order: number[] = [];
     
-    for (let i = 0; i < totalPlayers; i++) {
-      const playerNum = ((startPlayer - 1 + i) % totalPlayers) + 1;
-      order.push(playerNum);
-    }
-    
-    // If first player is still Mr. White, swap with second player
-    const firstPlayerId = order[0];
-    const firstPlayer = players.find(p => p.id === firstPlayerId);
-    
-    if (firstPlayer && firstPlayer.role === 'mrwhite' && order.length > 1) {
-      [order[0], order[1]] = [order[1], order[0]];
+    if (isForward) {
+      for (let i = 0; i < totalPlayers; i++) {
+        const playerNum = ((startPlayer - 1 + i) % totalPlayers) + 1;
+        order.push(playerNum);
+      }
+    } else {
+      for (let i = 0; i < totalPlayers; i++) {
+        let playerNum = startPlayer - i;
+        if (playerNum <= 0) {
+          playerNum = totalPlayers + playerNum;
+        }
+        order.push(playerNum);
+      }
     }
     
     return order;
   };
 
-  // Check if player names are preserved (not empty)
-  const areNamesPreserved = () => {
-    return gameState.players.length > 0 && gameState.players.every(player => player.name.trim() !== '');
-  };
-
-  // Get random word pair for game
-  const getGameWords = () => {
-    const wordPair = WordService.getRandomUnplayedWord();
-    
-    if (!wordPair) {
-      // All words are played, show management modal
-      setShowWordManagementModal(true);
+  // Get random word pair
+  const getRandomWordPair = (): { civilian: string; undercover: string } | null => {
+    const unplayedWord = WordService.getRandomUnplayedWord();
+    if (!unplayedWord) {
       return null;
     }
-    
     return {
-      civilian: wordPair.civilian,
-      undercover: wordPair.undercover
+      civilian: unplayedWord.civilian,
+      undercover: unplayedWord.undercover
     };
   };
 
   // Initialize game
   const initializeGame = () => {
-    const selectedWords = getGameWords();
-    if (!selectedWords) return; // Word management modal will be shown
-    
+    // Check if words are available
+    if (WordService.areAllWordsPlayed()) {
+      setShowWordManagementModal(true);
+      return;
+    }
+
+    const selectedWords = getRandomWordPair();
+    if (!selectedWords) {
+      setShowWordManagementModal(true);
+      return;
+    }
+
     const roles: PlayerRole[] = [];
     
     for (let i = 0; i < civilians; i++) roles.push('civilian');
@@ -174,7 +135,19 @@ function App() {
       isEliminated: false
     }));
 
-    const playerOrder = generatePlayerOrder(totalPlayers, players);
+    let playerOrder = generatePlayerOrder(totalPlayers);
+    
+    // Ensure Mr. White is not first in the order
+    const mrWhitePlayer = players.find(p => p.role === 'mrwhite');
+    if (mrWhitePlayer) {
+      const mrWhiteOrderIndex = playerOrder.findIndex(playerId => playerId === mrWhitePlayer.id);
+      if (mrWhiteOrderIndex === 0) {
+        // Move Mr. White to a random position that's not first
+        const newPosition = Math.floor(Math.random() * (playerOrder.length - 1)) + 1;
+        playerOrder.splice(mrWhiteOrderIndex, 1);
+        playerOrder.splice(newPosition, 0, mrWhitePlayer.id);
+      }
+    }
 
     setGameState({
       phase: 'card-selection',
@@ -192,57 +165,46 @@ function App() {
     });
   };
 
-  // Start new game with same settings and preserved names
-  const startNewGame = () => {
-    const selectedWords = getGameWords();
-    if (!selectedWords) return; // Word management modal will be shown
-    
-    const roles: PlayerRole[] = [];
-    
-    for (let i = 0; i < civilians; i++) roles.push('civilian');
-    for (let i = 0; i < undercover; i++) roles.push('undercover');
-    for (let i = 0; i < mrWhite; i++) roles.push('mrwhite');
-    
-    for (let i = roles.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [roles[i], roles[j]] = [roles[j], roles[i]];
+  // Handle refresh word pair
+  const handleRefreshWords = async () => {
+    if (isRefreshing) return;
+
+    // Check if there are other unplayed words available
+    const unplayedWords = WordService.getUnplayedWords();
+    if (unplayedWords.length <= 1) {
+      setShowWordManagementModal(true);
+      return;
     }
 
-    // Keep existing player names but reset their game state
-    const newPlayers: Player[] = gameState.players.map((player, index) => ({
-      id: player.id,
-      name: player.name, // Keep existing name
-      role: roles[index],
-      word: roles[index] === 'civilian' ? selectedWords.civilian : 
-            roles[index] === 'undercover' ? selectedWords.undercover : '',
-      hasRevealed: false,
-      cardIndex: -1, // Reset card selection
-      isEliminated: false
+    setIsRefreshing(true);
+
+    // Mark current word pair as played
+    WordService.markWordAsPlayed(gameState.gameWords.civilian, gameState.gameWords.undercover);
+
+    // Get a new random word pair
+    const newWordPair = getRandomWordPair();
+    if (!newWordPair) {
+      setShowWordManagementModal(true);
+      setIsRefreshing(false);
+      return;
+    }
+
+    // Update players with new words
+    const updatedPlayers = gameState.players.map(player => ({
+      ...player,
+      word: player.role === 'civilian' ? newWordPair.civilian : 
+            player.role === 'undercover' ? newWordPair.undercover : ''
     }));
 
-    const playerOrder = generatePlayerOrder(totalPlayers, newPlayers);
-
-    setGameState({
-      phase: 'card-selection',
-      currentPlayerIndex: 0,
-      selectedCard: null,
-      players: newPlayers,
-      round: 1,
-      gameWords: selectedWords,
-      playerOrder,
-      selectedPlayerToEliminate: null,
-      eliminatedPlayer: null,
-      winner: null,
-      mrWhiteGuess: '',
-      showingWord: false
-    });
-  };
-
-  // Mark current game words as played when game ends
-  const markCurrentWordsAsPlayed = () => {
-    if (gameState.gameWords.civilian && gameState.gameWords.undercover) {
-      WordService.markWordAsPlayed(gameState.gameWords.civilian, gameState.gameWords.undercover);
-    }
+    // Simulate animation delay
+    setTimeout(() => {
+      setGameState(prev => ({
+        ...prev,
+        gameWords: newWordPair,
+        players: updatedPlayers
+      }));
+      setIsRefreshing(false);
+    }, 500);
   };
 
   // Validation functions
@@ -305,12 +267,10 @@ function App() {
 
     setGameState(prev => ({ ...prev, selectedCard: cardIndex }));
     
-    // Show name modal only if round 1 AND names are not preserved
-    if (gameState.round === 1 && !areNamesPreserved()) {
+    if (gameState.round === 1) {
       setShowNameModal(true);
     } else {
       setShowWordModal(true);
-      setGameState(prev => ({ ...prev, showingWord: true }));
     }
   };
 
@@ -322,8 +282,7 @@ function App() {
       
       setGameState(prev => ({
         ...prev,
-        players: updatedPlayers,
-        showingWord: true
+        players: updatedPlayers
       }));
       
       setPlayerName('');
@@ -333,16 +292,11 @@ function App() {
   };
 
   const handleWordRevealNext = () => {
-    // Hide word immediately
-    setGameState(prev => ({ ...prev, showingWord: false }));
-    
-    // Start transition phase
-    setTimeout(() => {
+    if (gameState.selectedCard !== null) {
       const updatedPlayers = [...gameState.players];
       updatedPlayers[gameState.currentPlayerIndex].hasRevealed = true;
       
-      // Always update the card index when word is revealed
-      if (gameState.selectedCard !== null) {
+      if (gameState.round > 1) {
         updatedPlayers[gameState.currentPlayerIndex].cardIndex = gameState.selectedCard;
       }
       
@@ -356,8 +310,9 @@ function App() {
           players: updatedPlayers
         }));
         
-        // Show player turn modal for next player
-        setShowPlayerTurnModal(true);
+        if (gameState.round > 1) {
+          setShowTurnModal(true);
+        }
       } else {
         setGameState(prev => ({
           ...prev,
@@ -366,11 +321,7 @@ function App() {
           players: updatedPlayers
         }));
       }
-    }, 300); // Smooth transition delay
-  };
-
-  const handlePlayerTurnModalNext = () => {
-    setShowPlayerTurnModal(false);
+    }
   };
 
   const handleTurnModalNext = () => {
@@ -441,7 +392,7 @@ function App() {
         winner: 'mrwhite',
         phase: 'game-over'
       }));
-      markCurrentWordsAsPlayed();
+      setShowGameOverModal(true);
     } else {
       // Continue game, check other win conditions
       checkWinConditions();
@@ -466,12 +417,15 @@ function App() {
     }
 
     if (winner) {
+      // Mark current word pair as played when game ends
+      WordService.markWordAsPlayed(gameState.gameWords.civilian, gameState.gameWords.undercover);
+      
       setGameState(prev => ({
         ...prev,
         winner,
         phase: 'game-over'
       }));
-      markCurrentWordsAsPlayed();
+      setShowGameOverModal(true);
     } else {
       // Continue to next round - back to description phase
       setGameState(prev => ({
@@ -485,9 +439,6 @@ function App() {
   };
 
   const handleBackToSetup = () => {
-    // Mark words as played when going back to setup
-    markCurrentWordsAsPlayed();
-    
     setGameState({
       phase: 'setup',
       currentPlayerIndex: 0,
@@ -502,18 +453,12 @@ function App() {
       mrWhiteGuess: '',
       showingWord: false
     });
+    setShowGameOverModal(false);
   };
 
   const handleWordsUpdated = () => {
-    // This will be called after words are updated in the management modal
-    // We can now try to initialize the game again
-    if (gameState.phase === 'setup') {
-      // If we're in setup phase, just close the modal
-      setShowWordManagementModal(false);
-    } else {
-      // If we were trying to start a game, try again
-      initializeGame();
-    }
+    // Restart the game initialization process
+    initializeGame();
   };
 
   const getCurrentPlayer = () => gameState.players[gameState.currentPlayerIndex];
@@ -544,23 +489,14 @@ function App() {
     return { undercovers, mrWhites, total: undercovers + mrWhites };
   };
 
-  // Helper function to get card colors
-  const getCardColor = (player: Player, index: number) => {
-    const colors = ['bg-green-500', 'bg-cyan-500', 'bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-red-500', 'bg-orange-500', 'bg-teal-500', 'bg-violet-500'];
-    return colors[index % colors.length];
-  };
-
-  // Get players in consistent order for voting (same as description phase order, but eliminated at end)
-  const getPlayersForVoting = () => {
-    const orderedPlayers = getOrderedPlayers();
-    const activePlayers = orderedPlayers.filter(p => !p.isEliminated);
-    const eliminatedPlayers = orderedPlayers.filter(p => p.isEliminated);
-    
-    return [...activePlayers, ...eliminatedPlayers];
+  const getAvailableWordCount = () => {
+    return WordService.getUnplayedWords().length;
   };
 
   // Render different screens based on game phase
   if (gameState.phase === 'setup') {
+    const availableWords = getAvailableWordCount();
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 w-screen">
         <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8 w-screen">
@@ -570,10 +506,8 @@ function App() {
               <div className="text-center space-y-3">
                 <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Undercover</h1>
                 <p className="text-lg text-gray-600">Atur Pemain</p>
-                
-                {/* Word Statistics */}
-                <div className="text-sm text-gray-500">
-                  <span>{WordService.getTotalWordCount() - WordService.getPlayedWordCount()} words available</span>
+                <div className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full inline-block">
+                  {availableWords} kata tersedia
                 </div>
               </div>
 
@@ -738,18 +672,7 @@ function App() {
           <div className="bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="font-medium">Penyusup tersisa</span>
-            <div className="flex gap-1">
-              {remainingCounts.undercovers > 0 && (
-                <span className="bg-black text-white px-2 py-1 rounded text-sm">
-                  {remainingCounts.undercovers}U
-                </span>
-              )}
-              {remainingCounts.mrWhites > 0 && (
-                <span className="bg-white text-black border border-gray-400 px-2 py-1 rounded text-sm">
-                  {remainingCounts.mrWhites}W
-                </span>
-              )}
-            </div>
+            <span className="bg-black text-white px-2 py-1 rounded text-sm">{remainingCounts.total}</span>
           </div>
           <div className="bg-gray-100 px-4 py-2 rounded-lg">
             <span className="text-gray-600">Round</span>
@@ -758,8 +681,8 @@ function App() {
         </div>
 
         {/* Cards Grid */}
-        <div className="flex-1 p-6 flex items-center justify-center">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 max-w-4xl w-full">
+        <div className="flex-1 p-6 flex flex-col items-center justify-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-md w-full mb-8">
             {Array.from({ length: totalPlayers }, (_, index) => {
               const playerAtCard = getPlayerByCardIndex(index);
               const isSelected = gameState.selectedCard === index;
@@ -793,27 +716,27 @@ function App() {
               );
             })}
           </div>
-        </div>
 
-        {/* Player Turn Modal */}
-        <Dialog open={showPlayerTurnModal} onOpenChange={setShowPlayerTurnModal}>
-          <DialogContent className="max-w-sm mx-auto">
-            <DialogHeader>
-              <DialogTitle className="text-center text-lg">
-                {currentPlayer?.name || `Player ${gameState.currentPlayerIndex + 1}`} memilih kartu
-              </DialogTitle>
-            </DialogHeader>
-            <div className="text-center py-4">
-              <div className="w-20 h-20 bg-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <User className="h-10 w-10 text-white" />
-              </div>
-              <p className="text-gray-600 mb-6">Silakan pilih kartu untuk melanjutkan</p>
-              <Button onClick={handlePlayerTurnModalNext} className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded-full">
-                OK
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          {/* Refresh Word Button */}
+          <div className="flex flex-col items-center gap-3">
+            <Button
+              onClick={handleRefreshWords}
+              disabled={isRefreshing}
+              className={`w-16 h-16 rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-lg transition-all duration-200 ${
+                isRefreshing ? 'animate-pulse' : 'hover:scale-105'
+              }`}
+            >
+              <RotateCcw 
+                className={`h-6 w-6 transition-transform duration-500 ${
+                  isRefreshing ? 'animate-spin' : ''
+                }`} 
+              />
+            </Button>
+            <p className="text-sm text-gray-600 text-center max-w-xs">
+              Klik untuk mendapatkan pasangan kata baru
+            </p>
+          </div>
+        </div>
 
         {/* Turn Modal for non-first rounds */}
         <Dialog open={showTurnModal} onOpenChange={setShowTurnModal}>
@@ -873,24 +796,18 @@ function App() {
                 Word Reveal for {currentPlayer?.name || `Player ${gameState.currentPlayerIndex + 1}`}
               </DialogTitle>
             </DialogHeader>
-            <div className={`text-center py-6 ${
-                gameState.showingWord ? 'opacity-100' : 'opacity-0'
-              }`}>
+            <div className="text-center py-6">
               <div className="text-6xl mb-4">
                 {currentPlayer?.role === 'mrwhite' ? '❓' : '📝'}
               </div>
               <h3 className="text-2xl font-bold mb-2">
                 {currentPlayer?.name || `Player ${gameState.currentPlayerIndex + 1}`}
               </h3>
-              <div className={`bg-gray-100 p-6 rounded-lg mb-6 transition-opacity duration-300 ${
-                gameState.showingWord ? 'opacity-100' : 'opacity-0'
-              }`}>
+              <div className="bg-gray-100 p-6 rounded-lg mb-6">
                 <p className="text-xl font-semibold">
-                  {gameState.showingWord ? (
-                    currentPlayer?.role === 'mrwhite' 
-                      ? "You're Mr. White" 
-                      : currentPlayer?.word
-                  ) : ''}
+                  {currentPlayer?.role === 'mrwhite' 
+                    ? "You're Mr. White" 
+                    : currentPlayer?.word}
                 </p>
               </div>
               <Button
@@ -945,18 +862,7 @@ function App() {
           <div className="bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="font-medium">Penyusup tersisa</span>
-            <div className="flex gap-1">
-              {remainingCounts.undercovers > 0 && (
-                <span className="bg-black text-white px-2 py-1 rounded text-sm">
-                  {remainingCounts.undercovers}U
-                </span>
-              )}
-              {remainingCounts.mrWhites > 0 && (
-                <span className="bg-white text-black border border-gray-400 px-2 py-1 rounded text-sm">
-                  {remainingCounts.mrWhites}W
-                </span>
-              )}
-            </div>
+            <span className="bg-black text-white px-2 py-1 rounded text-sm">{remainingCounts.total}</span>
           </div>
           <div className="bg-gray-100 px-4 py-2 rounded-lg">
             <span className="text-gray-600">Round</span>
@@ -964,33 +870,35 @@ function App() {
           </div>
         </div>
 
-        {/* Player Order Cards - Grid Layout */}
+        {/* Player Order Cards - Horizontal Layout */}
         <div className="flex-1 p-6">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <div className="mb-4 text-center">
               <p className="text-sm text-gray-600">
                 Urutan berbicara (Player aktif):
               </p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {orderedPlayers.map((player, index) => (
-                <Card
-                  key={player.id}
-                  className={`aspect-[3/4] ${getCardColor(player, player.id - 1)} text-white flex flex-col items-center justify-center shadow-lg relative`}
-                >
-                  <div className="absolute -top-2 -right-2 bg-white text-gray-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold border-2 border-gray-200">
-                    {index + 1}
-                  </div>
-                  
-                  <div className="text-4xl font-bold mb-2">
-                    {player.name?.charAt(0)?.toUpperCase() || 'P'}
-                  </div>
-                  
-                  <div className="text-sm font-medium text-center px-2">
-                    {player.name || `Player ${player.id}`}
-                  </div>
-                </Card>
-              ))}
+            <div className="overflow-x-auto pb-4">
+              <div className="flex gap-4 min-w-max px-4">
+                {orderedPlayers.map((player, index) => (
+                  <Card
+                    key={player.id}
+                    className="flex-shrink-0 w-24 h-32 bg-green-500 text-white flex flex-col items-center justify-center shadow-lg relative"
+                  >
+                    <div className="absolute -top-2 -right-2 bg-white text-gray-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold border-2 border-gray-200">
+                      {index + 1}
+                    </div>
+                    
+                    <div className="text-2xl font-bold mb-1">
+                      {player.name?.charAt(0)?.toUpperCase() || 'P'}
+                    </div>
+                    
+                    <div className="text-xs font-medium text-center px-1 leading-tight">
+                      {player.name || `Player ${player.id}`}
+                    </div>
+                  </Card>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -1011,8 +919,13 @@ function App() {
   }
 
   if (gameState.phase === 'voting') {
-    const playersForVoting = getPlayersForVoting();
+    const activePlayers = getActivePlayers();
     const remainingCounts = getRemainingCounts();
+    
+    // Sort active players to match description phase order, with eliminated players at the end
+    const orderedActivePlayers = getOrderedPlayers().filter(p => !p.isEliminated);
+    const eliminatedPlayers = getOrderedPlayers().filter(p => p.isEliminated);
+    const sortedPlayers = [...orderedActivePlayers, ...eliminatedPlayers];
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 w-screen">
@@ -1042,51 +955,40 @@ function App() {
           <div className="bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2">
             <Skull className="h-4 w-4" />
             <span className="font-medium">Penyusup tersisa</span>
-            <div className="flex gap-1">
-              {remainingCounts.undercovers > 0 && (
-                <span className="bg-black text-white px-2 py-1 rounded text-sm">
-                  {remainingCounts.undercovers}U
-                </span>
-              )}
-              {remainingCounts.mrWhites > 0 && (
-                <span className="bg-white text-black border border-gray-400 px-2 py-1 rounded text-sm">
-                  {remainingCounts.mrWhites}W
-                </span>
-              )}
-            </div>
+            <span className="bg-black text-white px-2 py-1 rounded text-sm">{remainingCounts.total}</span>
           </div>
           <div className="bg-gray-100 px-4 py-2 rounded-lg">
             <span className="text-gray-600">Peran Khusus</span>
             <span className="ml-2 text-gray-400">
-              {remainingCounts.mrWhites > 0 ? 'Ada Mr. White' : 'Tidak ada'}
+              {remainingCounts.mrWhites > 0 ? 'Tidak ada' : 'Tidak ada'}
             </span>
           </div>
         </div>
 
-        {/* Players Grid - Same order as description phase */}
+        {/* Players Grid - Ordered like description phase */}
         <div className="flex-1 p-6">
           <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {playersForVoting.map((player) => {
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {sortedPlayers.map((player) => {
+                const colors = ['bg-green-500', 'bg-cyan-500', 'bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-red-500'];
+                const bgColor = colors[(player.id - 1) % colors.length];
                 const isSelected = gameState.selectedPlayerToEliminate === player.id;
                 const isEliminated = player.isEliminated;
-                const isClickable = !isEliminated;
-                const bgColor = getCardColor(player, player.id - 1);
                 
                 return (
                   <Card
                     key={player.id}
                     className={`aspect-[3/4] transition-all duration-200 shadow-lg relative ${
                       isEliminated 
-                        ? `${bgColor} opacity-40 cursor-not-allowed text-white` 
+                        ? 'bg-gray-400 text-white cursor-not-allowed opacity-60' 
                         : isSelected 
                           ? `${bgColor} ring-4 ring-orange-500 scale-105 text-white cursor-pointer` 
                           : `${bgColor} hover:scale-105 text-white cursor-pointer`
                     }`}
-                    onClick={() => isClickable && handlePlayerSelect(player.id)}
+                    onClick={() => !isEliminated && handlePlayerSelect(player.id)}
                   >
-                    {/* Selection badge */}
-                    {isSelected && (
+                    {/* Elimination badge */}
+                    {isSelected && !isEliminated && (
                       <div className="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold border-2 border-white">
                         ✓
                       </div>
@@ -1094,7 +996,7 @@ function App() {
                     
                     {/* Eliminated badge */}
                     {isEliminated && (
-                      <div className="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold border-2 border-white">
+                      <div className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold border-2 border-white">
                         ✕
                       </div>
                     )}
@@ -1106,7 +1008,7 @@ function App() {
                       <div className="text-sm font-medium text-center">
                         {player.name || `Player ${player.id}`}
                       </div>
-                      {isSelected && (
+                      {isSelected && !isEliminated && (
                         <div className="mt-2 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold">
                           Eliminasi
                         </div>
@@ -1136,7 +1038,7 @@ function App() {
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
-              Eliminasi
+              Eliminasi Player
             </Button>
           </div>
         </div>
@@ -1237,10 +1139,10 @@ function App() {
                 Mr. White menebak kata civilian...
               </p>
               <Button
-                onClick={() => setShowMrWhiteGuessModal(false)}
+                onClick={handleMrWhiteGuess}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2 rounded-full"
               >
-                OK
+                Reveal Result
               </Button>
             </div>
           </DialogContent>
@@ -1305,24 +1207,36 @@ function App() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-4">
-              <Button
-                onClick={handleBackToSetup}
-                variant="outline"
-                className="flex-1 py-3 rounded-full text-lg border-2 border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-2"
-              >
-                <Home className="h-5 w-5" />
-              </Button>
-              <Button
-                onClick={startNewGame}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-full text-lg"
-              >
-                Lanjut
-              </Button>
-            </div>
+            <Button
+              onClick={handleBackToSetup}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-full text-lg"
+            >
+              Play Again
+            </Button>
           </Card>
         </div>
+
+        {/* Game Over Modal */}
+        <Dialog open={showGameOverModal} onOpenChange={setShowGameOverModal}>
+          <DialogContent className="max-w-sm mx-auto">
+            <DialogHeader>
+              <DialogTitle className="text-center text-lg">
+                🎉 Game Complete!
+              </DialogTitle>
+            </DialogHeader>
+            <div className="text-center py-4">
+              <p className="text-gray-600 mb-6">
+                The game has ended. Check the results!
+              </p>
+              <Button
+                onClick={() => setShowGameOverModal(false)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded-full"
+              >
+                View Results
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
