@@ -189,11 +189,13 @@ function App() {
       return;
     }
 
-    // Update players with new words
+    // Update players with new words and reset card selections
     const updatedPlayers = gameState.players.map(player => ({
       ...player,
       word: player.role === 'civilian' ? newWordPair.civilian : 
-            player.role === 'undercover' ? newWordPair.undercover : ''
+            player.role === 'undercover' ? newWordPair.undercover : '',
+      cardIndex: -1, // Reset card selection
+      hasRevealed: false // Reset reveal status
     }));
 
     // Simulate animation delay
@@ -201,7 +203,9 @@ function App() {
       setGameState(prev => ({
         ...prev,
         gameWords: newWordPair,
-        players: updatedPlayers
+        players: updatedPlayers,
+        selectedCard: null, // Reset selected card
+        currentPlayerIndex: 0 // Reset to first player
       }));
       setIsRefreshing(false);
     }, 500);
