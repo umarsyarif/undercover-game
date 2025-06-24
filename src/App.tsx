@@ -5,43 +5,9 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Minus, Plus, User, ArrowLeft, HelpCircle, Crown, Skull, Home } from 'lucide-react';
-
-// Game words data
-const gameWords = [
-  { civilian: 'Apel', undercover: 'Jeruk' },
-  { civilian: 'Kucing', undercover: 'Anjing' },
-  { civilian: 'Mobil', undercover: 'Motor' },
-  { civilian: 'Kopi', undercover: 'Teh' },
-  { civilian: 'Buku', undercover: 'Majalah' },
-];
-
-type GamePhase = 'setup' | 'card-selection' | 'name-input' | 'word-reveal' | 'word-transition' | 'description' | 'voting' | 'mr-white-guess' | 'game-over';
-type PlayerRole = 'civilian' | 'undercover' | 'mrwhite';
-
-interface Player {
-  id: number;
-  name: string;
-  role: PlayerRole;
-  word: string;
-  hasRevealed: boolean;
-  cardIndex: number;
-  isEliminated: boolean;
-}
-
-interface GameState {
-  phase: GamePhase;
-  currentPlayerIndex: number;
-  selectedCard: number | null;
-  players: Player[];
-  round: number;
-  gameWords: { civilian: string; undercover: string };
-  playerOrder: number[];
-  selectedPlayerToEliminate: number | null;
-  eliminatedPlayer: Player | null;
-  winner: 'civilian' | 'undercover' | 'mrwhite' | null;
-  mrWhiteGuess: string;
-  showingWord: boolean;
-}
+import { WordManagementModal } from './components/WordManagementModal';
+import { WordService } from './services/wordService';
+import type { GamePhase, PlayerRole, Player, GameState } from './types/gameTypes';
 
 function App() {
   const [totalPlayers, setTotalPlayers] = useState(3);
@@ -55,6 +21,7 @@ function App() {
   const [showPlayerTurnModal, setShowPlayerTurnModal] = useState(false);
   const [showEliminationModal, setShowEliminationModal] = useState(false);
   const [showMrWhiteGuessModal, setShowMrWhiteGuessModal] = useState(false);
+  const [showWordManagementModal, setShowWordManagementModal] = useState(false);
 
   const [gameState, setGameState] = useState<GameState>({
     phase: 'setup',
@@ -62,7 +29,7 @@ function App() {
     selectedCard: null,
     players: [],
     round: 1,
-    gameWords: gameWords[0],
+    gameWords: { civilian: '', undercover: '' },
     playerOrder: [],
     selectedPlayerToEliminate: null,
     eliminatedPlayer: null,
@@ -70,6 +37,11 @@ function App() {
     mrWhiteGuess: '',
     showingWord: false
   });
+
+  // Initialize word service on component mount
+  useEffect(() => {
+    WordService.initializeWords();
+  }, []);
 
   // Calculate civilians whenever other values change
   useEffect(() => {
@@ -159,9 +131,27 @@ function App() {
     return gameState.players.length > 0 && gameState.players.every(player => player.name.trim() !== '');
   };
 
+  // Get random word pair for game
+  const getGameWords = () => {
+    const wordPair = WordService.getRandomUnplayedWord();
+    
+    if (!wordPair) {
+      // All words are played, show management modal
+      setShowWordManagementModal(true);
+      return null;
+    }
+    
+    return {
+      civilian: wordPair.civilian,
+      undercover: wordPair.undercover
+    };
+  };
+
   // Initialize game
   const initializeGame = () => {
-    const selectedWords = gameWords[Math.floor(Math.random() * gameWords.length)];
+    const selectedWords = getGameWords();
+    if (!selectedWords) return; // Word management modal will be shown
+    
     const roles: PlayerRole[] = [];
     
     for (let i = 0; i < civilians; i++) roles.push('civilian');
@@ -204,7 +194,9 @@ function App() {
 
   // Start new game with same settings and preserved names
   const startNewGame = () => {
-    const selectedWords = gameWords[Math.floor(Math.random() * gameWords.length)];
+    const selectedWords = getGameWords();
+    if (!selectedWords) return; // Word management modal will be shown
+    
     const roles: PlayerRole[] = [];
     
     for (let i = 0; i < civilians; i++) roles.push('civilian');
@@ -244,6 +236,13 @@ function App() {
       mrWhiteGuess: '',
       showingWord: false
     });
+  };
+
+  // Mark current game words as played when game ends
+  const markCurrentWordsAsPlayed = () => {
+    if (gameState.gameWords.civilian && gameState.gameWords.undercover) {
+      WordService.markWordAsPlayed(gameState.gameWords.civilian, gameState.gameWords.undercover);
+    }
   };
 
   // Validation functions
@@ -442,6 +441,7 @@ function App() {
         winner: 'mrwhite',
         phase: 'game-over'
       }));
+      markCurrentWordsAsPlayed();
     } else {
       // Continue game, check other win conditions
       checkWinConditions();
@@ -471,6 +471,7 @@ function App() {
         winner,
         phase: 'game-over'
       }));
+      markCurrentWordsAsPlayed();
     } else {
       // Continue to next round - back to description phase
       setGameState(prev => ({
@@ -484,13 +485,16 @@ function App() {
   };
 
   const handleBackToSetup = () => {
+    // Mark words as played when going back to setup
+    markCurrentWordsAsPlayed();
+    
     setGameState({
       phase: 'setup',
       currentPlayerIndex: 0,
       selectedCard: null,
       players: [],
       round: 1,
-      gameWords: gameWords[0],
+      gameWords: { civilian: '', undercover: '' },
       playerOrder: [],
       selectedPlayerToEliminate: null,
       eliminatedPlayer: null,
@@ -498,6 +502,18 @@ function App() {
       mrWhiteGuess: '',
       showingWord: false
     });
+  };
+
+  const handleWordsUpdated = () => {
+    // This will be called after words are updated in the management modal
+    // We can now try to initialize the game again
+    if (gameState.phase === 'setup') {
+      // If we're in setup phase, just close the modal
+      setShowWordManagementModal(false);
+    } else {
+      // If we were trying to start a game, try again
+      initializeGame();
+    }
   };
 
   const getCurrentPlayer = () => gameState.players[gameState.currentPlayerIndex];
@@ -554,6 +570,11 @@ function App() {
               <div className="text-center space-y-3">
                 <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Undercover</h1>
                 <p className="text-lg text-gray-600">Atur Pemain</p>
+                
+                {/* Word Statistics */}
+                <div className="text-sm text-gray-500">
+                  <span>{WordService.getTotalWordCount() - WordService.getPlayedWordCount()} words available</span>
+                </div>
               </div>
 
               {/* Player Configuration */}
@@ -677,6 +698,13 @@ function App() {
             </div>
           </div>
         </div>
+
+        {/* Word Management Modal */}
+        <WordManagementModal
+          isOpen={showWordManagementModal}
+          onClose={() => setShowWordManagementModal(false)}
+          onWordsUpdated={handleWordsUpdated}
+        />
       </div>
     );
   }
@@ -874,6 +902,13 @@ function App() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Word Management Modal */}
+        <WordManagementModal
+          isOpen={showWordManagementModal}
+          onClose={() => setShowWordManagementModal(false)}
+          onWordsUpdated={handleWordsUpdated}
+        />
       </div>
     );
   }
