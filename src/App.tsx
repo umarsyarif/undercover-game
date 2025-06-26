@@ -896,35 +896,33 @@ function App() {
           </div>
         </div>
 
-        {/* Player Order Cards - Horizontal Layout */}
+        {/* Player Order Cards - Grid Layout */}
         <div className="flex-1 p-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="mb-4 text-center">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-6 text-center">
               <p className="text-sm text-gray-600">
                 Urutan berbicara (Player aktif):
               </p>
             </div>
-            <div className="overflow-x-auto pb-4">
-              <div className="flex gap-4 min-w-max px-4">
-                {orderedPlayers.map((player, index) => (
-                  <Card
-                    key={player.id}
-                    className="flex-shrink-0 w-24 h-32 bg-green-500 text-white flex flex-col items-center justify-center shadow-lg relative"
-                  >
-                    <div className="absolute -top-2 -right-2 bg-white text-gray-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold border-2 border-gray-200">
-                      {index + 1}
-                    </div>
-                    
-                    <div className="text-2xl font-bold mb-1">
-                      {player.name?.charAt(0)?.toUpperCase() || 'P'}
-                    </div>
-                    
-                    <div className="text-xs font-medium text-center px-1 leading-tight">
-                      {player.name || `Player ${player.id}`}
-                    </div>
-                  </Card>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {orderedPlayers.map((player, index) => (
+                <Card
+                  key={player.id}
+                  className="aspect-[3/4] bg-green-500 text-white flex flex-col items-center justify-center shadow-lg relative"
+                >
+                  <div className="absolute -top-2 -right-2 bg-white text-gray-800 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold border-2 border-gray-200">
+                    {index + 1}
+                  </div>
+                  
+                  <div className="text-3xl font-bold mb-2">
+                    {player.name?.charAt(0)?.toUpperCase() || 'P'}
+                  </div>
+                  
+                  <div className="text-xs font-medium text-center px-2 leading-tight">
+                    {player.name || `Player ${player.id}`}
+                  </div>
+                </Card>
+              ))}
             </div>
           </div>
         </div>
