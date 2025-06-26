@@ -1174,10 +1174,10 @@ function App() {
                 Mr. White menebak kata civilian...
               </p>
               <Button
-                onClick={handleMrWhiteGuess}
+                onClick={() => setShowMrWhiteGuessModal(false)}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2 rounded-full"
               >
-                Reveal Result
+                OK
               </Button>
             </div>
           </DialogContent>
