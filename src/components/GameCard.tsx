@@ -27,19 +27,17 @@ export const GameCard: React.FC<GameCardProps> = ({
   className = ''
 }) => {
   const getCardColors = () => {
-    if (variant === 'voting' && player) {
-      const colors = ['bg-green-500', 'bg-cyan-500', 'bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-red-500'];
-      return colors[(player.id - 1) % colors.length];
+    // Eliminated players are always grey
+    if (player?.isEliminated && showEliminated) {
+      return 'bg-gray-400';
     }
     
-    if (variant === 'player') {
+    // Players with cards are always green
+    if (player && !player.isEliminated) {
       return 'bg-green-500';
     }
     
-    if (player) {
-      return 'bg-green-500';
-    }
-    
+    // Unopened cards are yellow
     return isSelected ? 'bg-yellow-500 hover:bg-yellow-600 ring-4 ring-blue-500 scale-105' : 'bg-yellow-400 hover:bg-yellow-500';
   };
 

@@ -44,32 +44,36 @@ export const CardSelectionPhase: React.FC<CardSelectionPhaseProps> = ({
         round={gameState.round}
       />
 
-      {/* Cards Grid */}
-      <div className="flex-1 p-6 flex flex-col items-center justify-center">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-md w-full mb-8">
-          {Array.from({ length: totalPlayers }, (_, index) => {
-            const playerAtCard = getPlayerByCardIndex(index);
-            const isSelected = gameState.selectedCard === index;
-            const isAvailable = isCardAvailable(index);
-            
-            return (
-              <GameCard
-                key={index}
-                index={index}
-                player={playerAtCard}
-                isSelected={isSelected}
-                isAvailable={isAvailable}
-                onClick={() => isAvailable && onCardSelect(index)}
-                variant="selection"
-              />
-            );
-          })}
-        </div>
+      {/* Cards Grid - Same layout as description phase */}
+      <div className="flex-1 p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
+            {Array.from({ length: totalPlayers }, (_, index) => {
+              const playerAtCard = getPlayerByCardIndex(index);
+              const isSelected = gameState.selectedCard === index;
+              const isAvailable = isCardAvailable(index);
+              
+              return (
+                <GameCard
+                  key={index}
+                  index={index}
+                  player={playerAtCard}
+                  isSelected={isSelected}
+                  isAvailable={isAvailable}
+                  onClick={() => isAvailable && onCardSelect(index)}
+                  variant="selection"
+                />
+              );
+            })}
+          </div>
 
-        <RefreshButton
-          onClick={onRefreshWords}
-          isRefreshing={isRefreshing}
-        />
+          <div className="flex justify-center">
+            <RefreshButton
+              onClick={onRefreshWords}
+              isRefreshing={isRefreshing}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
