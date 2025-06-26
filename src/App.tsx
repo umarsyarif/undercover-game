@@ -676,7 +676,18 @@ function App() {
           <div className="bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="font-medium">Penyusup tersisa</span>
-            <span className="bg-black text-white px-2 py-1 rounded text-sm">{remainingCounts.total}</span>
+            <div className="flex items-center gap-1">
+              {remainingCounts.undercovers > 0 && (
+                <span className="bg-black text-white px-2 py-1 rounded text-sm">
+                  {remainingCounts.undercovers}U
+                </span>
+              )}
+              {remainingCounts.mrWhites > 0 && (
+                <span className="bg-gray-600 text-white px-2 py-1 rounded text-sm">
+                  {remainingCounts.mrWhites}W
+                </span>
+              )}
+            </div>
           </div>
           <div className="bg-gray-100 px-4 py-2 rounded-lg">
             <span className="text-gray-600">Round</span>
@@ -866,7 +877,18 @@ function App() {
           <div className="bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="font-medium">Penyusup tersisa</span>
-            <span className="bg-black text-white px-2 py-1 rounded text-sm">{remainingCounts.total}</span>
+            <div className="flex items-center gap-1">
+              {remainingCounts.undercovers > 0 && (
+                <span className="bg-black text-white px-2 py-1 rounded text-sm">
+                  {remainingCounts.undercovers}U
+                </span>
+              )}
+              {remainingCounts.mrWhites > 0 && (
+                <span className="bg-gray-600 text-white px-2 py-1 rounded text-sm">
+                  {remainingCounts.mrWhites}W
+                </span>
+              )}
+            </div>
           </div>
           <div className="bg-gray-100 px-4 py-2 rounded-lg">
             <span className="text-gray-600">Round</span>
@@ -959,7 +981,18 @@ function App() {
           <div className="bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2">
             <Skull className="h-4 w-4" />
             <span className="font-medium">Penyusup tersisa</span>
-            <span className="bg-black text-white px-2 py-1 rounded text-sm">{remainingCounts.total}</span>
+            <div className="flex items-center gap-1">
+              {remainingCounts.undercovers > 0 && (
+                <span className="bg-black text-white px-2 py-1 rounded text-sm">
+                  {remainingCounts.undercovers}U
+                </span>
+              )}
+              {remainingCounts.mrWhites > 0 && (
+                <span className="bg-gray-600 text-white px-2 py-1 rounded text-sm">
+                  {remainingCounts.mrWhites}W
+                </span>
+              )}
+            </div>
           </div>
           <div className="bg-gray-100 px-4 py-2 rounded-lg">
             <span className="text-gray-600">Peran Khusus</span>
