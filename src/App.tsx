@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Minus, Plus, User, ArrowLeft, HelpCircle, Crown, Skull, RotateCcw } from 'lucide-react';
+import { Minus, Plus, User, ArrowLeft, HelpCircle, Crown, Skull, RotateCcw, Home } from 'lucide-react';
 import { WordService } from './services/wordService';
 import { WordManagementModal } from './components/WordManagementModal';
 import type { GamePhase, PlayerRole, Player, GameState, WordPair } from './types/gameTypes';
@@ -1174,10 +1174,10 @@ function App() {
                 Mr. White menebak kata civilian...
               </p>
               <Button
-                onClick={() => setShowMrWhiteGuessModal(false)}
+                onClick={handleMrWhiteGuess}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2 rounded-full"
               >
-                OK
+                Reveal Result
               </Button>
             </div>
           </DialogContent>
@@ -1197,11 +1197,22 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-100 w-screen">
         {/* Header */}
-        <div className="bg-yellow-600 text-white p-4 text-center">
-          <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
-            <Crown className="h-6 w-6" />
-            Game Over
-          </h2>
+        <div className="bg-yellow-600 text-white p-4 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBackToSetup}
+            className="text-white hover:bg-yellow-700"
+          >
+            <Home className="h-5 w-5" />
+          </Button>
+          <div className="text-center flex-1">
+            <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
+              <Crown className="h-6 w-6" />
+              Game Over
+            </h2>
+          </div>
+          <div className="w-10"></div>
         </div>
 
         <div className="flex-1 flex items-center justify-center p-6">
@@ -1246,7 +1257,7 @@ function App() {
               onClick={handleBackToSetup}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-full text-lg"
             >
-              Play Again
+              Lanjut
             </Button>
           </Card>
         </div>
