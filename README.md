@@ -1,32 +1,27 @@
 # Undercover Game
 
-A digital implementation of the popular party game "Undercover" (similar to "Spyfall" or "Among Us" in concept).
+A web-based implementation of the popular party game "Undercover" (similar to "Spyfall" or "Werewolf"), built with React, TypeScript, and Vite.
 
-## About the Game
+## Game Overview
 
-Undercover is a social deduction game where players are given secret words. Most players receive the same word (Civilians), one or two get a slightly different word (Undercover), and optionally, one player gets no word at all (Mr. White).
+In Undercover, players are assigned roles:
+- **Civilians**: Most players receive the same word
+- **Undercover**: A few players receive a similar but different word
+- **Mr. White**: One player receives no word and must figure out what others are talking about
 
-Players take turns describing their word without revealing it directly. After each round, players vote on who they think is the Undercover or Mr. White.
+Players take turns describing their word without saying it directly. After each round, players vote on who they think is the Undercover or Mr. White. The game continues until all Undercovers and Mr. White are eliminated or until they outnumber the Civilians.
 
-For detailed game rules, see [Game Rules](docs/GAME_RULE.md).
+For detailed game rules, see [GAME_RULE.md](docs/GAME_RULE.md).
 
 ## Features
 
-- Player setup with customizable number of players, undercovers, and Mr. White
-- Card selection interface
-- Description phase with randomized player order
-- Voting phase
-- Game over screen with winner display
-- Word management with local storage
-- Responsive design for mobile and desktop
-
-## Technology Stack
-
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- Vitest for testing
+- Responsive design for mobile and desktop play
+- Automatic word pair generation via API
+- Custom word management
+- Multiple game phases (setup, description, voting, game over)
+- Real-time game state management
+- Player elimination tracking
+- Win condition detection for all roles
 
 ## Development
 
@@ -37,62 +32,95 @@ For detailed game rules, see [Game Rules](docs/GAME_RULE.md).
 
 ### Installation
 
-1. Clone the repository:
 ```bash
-git clone <repository-url>
+# Clone the repository
+git clone https://github.com/your-username/undercover-game.git
 cd undercover-game
-```
 
-2. Install dependencies:
-```bash
+# Install dependencies
 npm install
+# or
+yarn
 ```
 
-3. Create a `.env` file with your API endpoint:
+### Environment Variables
+
+Create a `.env` file in the root directory:
+
 ```
-VITE_WORD_API_ENDPOINT=https://your-api-endpoint.com/api/words
+VITE_WORD_API_ENDPOINT=http://your-api-endpoint/api/words
 ```
 
-4. Start the development server:
+### Running Locally
+
 ```bash
 npm run dev
+# or
+yarn dev
 ```
 
-### Testing
+This will start the development server at `http://localhost:5173`.
 
-Run tests with:
+### Building for Production
+
 ```bash
-npm test
+npm run build
+# or
+yarn build
 ```
 
 ## Deployment
 
-This application can be deployed using Docker and Docker Compose with a custom subdomain. See [Deployment Guide](docs/DEPLOYMENT.md) for detailed instructions.
+The application can be deployed using Docker and Docker Compose. It's designed to work with Traefik as a reverse proxy for automatic SSL and subdomain routing.
 
-### Quick Deployment with Subdomain
+### With Existing Traefik
 
-1. Make sure Docker and Docker Compose are installed
-2. Set up Nginx Proxy and Let's Encrypt companion (see Deployment Guide)
-3. Create a `.env` file with your API endpoint:
-```
-VITE_WORD_API_ENDPOINT=https://your-secure-api-endpoint.com/api/words
-```
-4. Run:
+If you already have Traefik running on your server (managing other applications):
+
+1. Simply run the deployment script:
+   ```bash
+   ./deploy.sh
+   ```
+
+2. The script will automatically detect your existing Traefik network and connect to it.
+
+### Without Existing Traefik
+
+If you don't have Traefik running yet:
+
+1. Use the included Traefik configuration:
+   ```bash
+   # Create the network
+   docker network create traefik-public
+   
+   # Start Traefik (after updating your email in docker/traefik.yml)
+   docker-compose -f docker/traefik-compose.yml up -d
+   
+   # Deploy the application
+   docker-compose up -d
+   ```
+
+For detailed deployment instructions, see [DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+## Architecture
+
+The application follows a service-oriented architecture with:
+
+- React components for UI
+- Custom hooks for state management
+- Service layer for game logic
+- API integration for word generation
+
+For architecture details and improvement plans, see [ARCHITECTURE_IMPROVEMENTS.md](docs/ARCHITECTURE_IMPROVEMENTS.md).
+
+## Testing
+
 ```bash
-docker-compose up -d
+npm run test
+# or
+yarn test
 ```
-5. Access the application at https://undercover.umarsyariif.site (or your configured subdomain)
-
-### Environment Variables
-
-| Variable | Description | Used At |
-|----------|-------------|---------|
-| VITE_WORD_API_ENDPOINT | URL to your word pairs API endpoint | Build time |
-
-## Security
-
-The API endpoint is injected at build time and not exposed in the runtime environment, providing better security for your backend services.
 
 ## License
 
-[MIT License](LICENSE)
+[MIT](LICENSE)

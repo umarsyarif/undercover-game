@@ -9,16 +9,17 @@ services:
         - VITE_WORD_API_ENDPOINT=${VITE_WORD_API_ENDPOINT:-http://localhost:3000/api/words}
     container_name: undercover-game
     restart: always
-    ports:
-      - "8080:80"
-    environment:
-      - NODE_ENV=production
-      - VIRTUAL_HOST=undercover.umarsyariif.site
-      - LETSENCRYPT_HOST=undercover.umarsyariif.site
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.undercover.rule=Host(`undercover.umarsyariif.site`)"
+      - "traefik.http.routers.undercover.entrypoints=websecure"
+      - "traefik.http.routers.undercover.tls.certresolver=letsencrypt"
+      - "traefik.http.services.undercover.loadbalancer.server.port=80"
+    networks:
+      - traefik-public
 
+# Use external network - this assumes your existing Traefik is on a network called 'traefik-public'
+# If your existing Traefik uses a different network name, replace 'traefik-public' with that name
 networks:
-  default:
-    external:
-      name: nginx-proxy 
+  traefik-public:
+    external: true 

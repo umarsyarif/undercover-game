@@ -31,56 +31,31 @@ else
   echo "✅ Docker Compose is installed."
 fi
 
-# Check if nginx-proxy network exists
-if ! docker network ls | grep -q nginx-proxy; then
-  echo "❓ nginx-proxy network not found. Do you want to create it? (y/n)"
-  read CREATE_NETWORK
-  if [ "$CREATE_NETWORK" = "y" ]; then
-    echo "Creating nginx-proxy network..."
-    docker network create nginx-proxy
-    echo "✅ nginx-proxy network created."
-  else
-    echo "⚠️ nginx-proxy network is required for subdomain routing."
-    echo "Please create it manually or use a different network configuration."
-  fi
-else
-  echo "✅ nginx-proxy network found."
-fi
+# Check for existing Traefik network
+echo "Checking for existing Traefik network..."
+TRAEFIK_NETWORK=$(docker network ls --filter name=traefik --format "{{.Name}}" | head -n 1)
 
-# Check if nginx-proxy container is running
-if ! docker ps | grep -q nginx-proxy; then
-  echo "⚠️ nginx-proxy container not found or not running."
-  echo "❓ Do you want to set up nginx-proxy and Let's Encrypt companion? (y/n)"
-  read SETUP_PROXY
-  if [ "$SETUP_PROXY" = "y" ]; then
-    echo "Setting up nginx-proxy..."
-    docker run -d -p 80:80 -p 443:443 \
-      --name nginx-proxy \
-      --net nginx-proxy \
-      -v /var/run/docker.sock:/tmp/docker.sock:ro \
-      -v certs:/etc/nginx/certs \
-      -v vhost:/etc/nginx/vhost.d \
-      -v html:/usr/share/nginx/html \
-      jwilder/nginx-proxy
-    
-    echo "Setting up Let's Encrypt companion..."
-    echo "Please enter your email address for Let's Encrypt:"
-    read EMAIL
-    docker run -d \
-      --name nginx-letsencrypt \
-      --net nginx-proxy \
-      --volumes-from nginx-proxy \
-      -v /var/run/docker.sock:/var/run/docker.sock:ro \
-      -v acme:/etc/acme.sh \
-      -e DEFAULT_EMAIL=$EMAIL \
-      jrcs/letsencrypt-nginx-proxy-companion
-    
-    echo "✅ nginx-proxy and Let's Encrypt companion set up."
+if [ -z "$TRAEFIK_NETWORK" ]; then
+  echo "⚠️ No Traefik network found. Please enter the name of your existing Traefik network:"
+  read NETWORK_NAME
+  
+  # Check if the provided network exists
+  if ! docker network ls | grep -q "$NETWORK_NAME"; then
+    echo "❌ Network '$NETWORK_NAME' does not exist. Please create it first."
+    exit 1
   else
-    echo "⚠️ You'll need to set up nginx-proxy manually for subdomain routing."
+    # Update docker-compose.yml with the correct network name
+    sed -i "s/traefik-public:/$NETWORK_NAME:/g" docker-compose.yml
+    echo "✅ Docker Compose file updated with network name: $NETWORK_NAME"
   fi
 else
-  echo "✅ nginx-proxy container is running."
+  echo "✅ Found Traefik network: $TRAEFIK_NETWORK"
+  
+  # Update docker-compose.yml with the correct network name if it's not traefik-public
+  if [ "$TRAEFIK_NETWORK" != "traefik-public" ]; then
+    sed -i "s/traefik-public:/$TRAEFIK_NETWORK:/g" docker-compose.yml
+    echo "✅ Docker Compose file updated with network name: $TRAEFIK_NETWORK"
+  fi
 fi
 
 # Deploy the application

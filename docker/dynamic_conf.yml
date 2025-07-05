@@ -1,0 +1,34 @@
+http:
+  middlewares:
+    secureHeaders:
+      headers:
+        frameDeny: true
+        sslRedirect: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+        customResponseHeaders:
+          X-Content-Type-Options: "nosniff"
+          X-XSS-Protection: "1; mode=block"
+          Referrer-Policy: "strict-origin-when-cross-origin"
+
+    auth:
+      basicAuth:
+        users:
+          - "admin:$apr1$ruca84Hq$mbjdMZBAG.KWn7vfN/SNK/" # admin:password - change this!
+
+  routers:
+    dashboard:
+      rule: "Host(`traefik.umarsyariif.site`)"
+      service: "api@internal"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "auth"
+        - "secureHeaders"
+      tls:
+        certResolver: "letsencrypt" 

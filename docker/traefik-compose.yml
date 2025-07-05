@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./docker/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./docker/dynamic_conf.yml:/etc/traefik/dynamic_conf.yml:ro
+      - traefik-acme:/etc/traefik/acme
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.umarsyariif.site`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.middlewares=auth,secureHeaders"
+
+networks:
+  traefik-public:
+    external: true
+
+volumes:
+  traefik-acme: 

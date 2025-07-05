@@ -1,13 +1,12 @@
 # Deployment Guide for Undercover Game
 
-This guide explains how to deploy the Undercover Game application using Docker and Docker Compose with a custom subdomain.
+This guide explains how to deploy the Undercover Game application using Docker and Docker Compose with a custom subdomain using an existing Traefik instance.
 
 ## Prerequisites
 
 - Docker
 - Docker Compose
-- Nginx Proxy (for subdomain routing)
-- Let's Encrypt companion (for SSL)
+- Existing Traefik instance running on your server
 - Domain name pointing to your server
 
 ## Environment Variables
@@ -18,36 +17,19 @@ The application requires the following environment variable:
 
 For security, this variable is passed as a build argument and not exposed in the runtime environment.
 
-## Deployment with Nginx Proxy Manager
+## Deployment with Existing Traefik
 
-This setup assumes you're using [nginx-proxy](https://github.com/nginx-proxy/nginx-proxy) with [letsencrypt-nginx-proxy-companion](https://github.com/nginx-proxy/docker-letsencrypt-nginx-proxy-companion) for automatic SSL and subdomain routing.
+This setup assumes you already have [Traefik](https://traefik.io/) running on your server and handling other applications.
 
-### 1. Set up Nginx Proxy (if not already running)
+### 1. Find Your Traefik Network
+
+First, you need to identify which Docker network your Traefik instance is using:
 
 ```bash
-# Create a network for your proxy
-docker network create nginx-proxy
-
-# Run the nginx-proxy container
-docker run -d -p 80:80 -p 443:443 \
-  --name nginx-proxy \
-  --net nginx-proxy \
-  -v /var/run/docker.sock:/tmp/docker.sock:ro \
-  -v certs:/etc/nginx/certs \
-  -v vhost:/etc/nginx/vhost.d \
-  -v html:/usr/share/nginx/html \
-  jwilder/nginx-proxy
-
-# Run the Let's Encrypt companion
-docker run -d \
-  --name nginx-letsencrypt \
-  --net nginx-proxy \
-  --volumes-from nginx-proxy \
-  -v /var/run/docker.sock:/var/run/docker.sock:ro \
-  -v acme:/etc/acme.sh \
-  -e DEFAULT_EMAIL=your-email@example.com \
-  jrcs/letsencrypt-nginx-proxy-companion
+docker network ls
 ```
+
+Look for a network that contains "traefik" in its name, or the network you know your Traefik is connected to.
 
 ### 2. Create a `.env` file with your API endpoint
 
@@ -61,15 +43,58 @@ This environment variable will be used during the build process but won't be exp
 
 ### 3. Deploy the Undercover Game
 
+The deployment script will automatically detect your Traefik network and connect to it:
+
+```bash
+./deploy.sh
+```
+
+If the script cannot find your Traefik network automatically, it will prompt you to enter the network name.
+
+The application will be available at `https://undercover.umarsyariif.site` once DNS propagation is complete.
+
+## Manual Deployment
+
+If you prefer to deploy manually:
+
+1. Update the `docker-compose.yml` file to use your Traefik network:
+```yaml
+networks:
+  traefik-public:  # Replace with your Traefik network name
+    external: true
+```
+
+2. Deploy the application:
 ```bash
 docker-compose up -d
 ```
 
-The application will be available at `https://undercover.umarsyariif.site` once DNS propagation is complete.
-
 ## DNS Configuration
 
-Ensure your DNS settings include an A record or CNAME record for `undercover.umarsyariif.site` pointing to your server's IP address.
+Ensure your DNS settings include an A record for `undercover.umarsyariif.site` pointing to your server's IP address.
+
+## Traefik Configuration
+
+Your existing Traefik instance should already be configured for:
+
+1. Automatic SSL certificate generation via Let's Encrypt
+2. HTTP to HTTPS redirection
+3. Proper routing based on hostnames
+
+If you need to make any Traefik-specific adjustments, you can modify the labels in the `docker-compose.yml` file:
+
+```yaml
+labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.undercover.rule=Host(`undercover.umarsyariif.site`)"
+  - "traefik.http.routers.undercover.entrypoints=websecure"
+  - "traefik.http.routers.undercover.tls.certresolver=letsencrypt"
+  - "traefik.http.services.undercover.loadbalancer.server.port=80"
+```
+
+Make sure these labels match your Traefik configuration, especially:
+- The `entrypoints` value should match your secure entrypoint name
+- The `certresolver` value should match your certificate resolver name
 
 ## Security Considerations
 
@@ -87,37 +112,20 @@ For additional security:
 - Set up CORS restrictions on your API server
 - Consider rate limiting to prevent abuse
 
-### SSL Configuration
-
-The Let's Encrypt companion automatically manages SSL certificates for your subdomain. Ensure that:
-
-- Your domain has proper DNS records
-- Ports 80 and 443 are open on your server
-- Your email address is correctly set in the Let's Encrypt container
-
 ## Troubleshooting
-
-### Certificate Issues
-
-If SSL certificates aren't being generated:
-
-```bash
-# Check the logs of the Let's Encrypt container
-docker logs nginx-letsencrypt
-```
-
-### Nginx Proxy Issues
-
-```bash
-# Check the logs of the Nginx proxy
-docker logs nginx-proxy
-```
 
 ### Application Issues
 
 ```bash
 # Check the logs of the Undercover Game container
 docker logs undercover-game
+```
+
+### Traefik Routing Issues
+
+```bash
+# Check the logs of your Traefik container
+docker logs <your-traefik-container-name>
 ```
 
 ## Updating the Application
