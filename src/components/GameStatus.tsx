@@ -11,7 +11,7 @@ interface GameStatusProps {
   variant?: 'infiltrator' | 'elimination';
 }
 
-export const GameStatus: React.FC<GameStatusProps> = ({
+export const GameStatus: React.FC<GameStatusProps> = React.memo(({
   remainingCounts,
   round,
   variant = 'infiltrator'
@@ -48,4 +48,4 @@ export const GameStatus: React.FC<GameStatusProps> = ({
       </div>
     </div>
   );
-};
+});

@@ -11,7 +11,7 @@ interface GameHeaderProps {
   variant?: 'default' | 'card-selection' | 'description' | 'voting' | 'game-over';
 }
 
-export const GameHeader: React.FC<GameHeaderProps> = ({
+export const GameHeader: React.FC<GameHeaderProps> = React.memo(({
   title,
   subtitle,
   onBack,
@@ -131,4 +131,4 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
       </div>
     </div>
   );
-};
+});

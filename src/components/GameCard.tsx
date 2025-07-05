@@ -15,7 +15,7 @@ interface GameCardProps {
   className?: string;
 }
 
-export const GameCard: React.FC<GameCardProps> = ({
+export const GameCard: React.FC<GameCardProps> = React.memo(({
   index,
   player,
   isSelected = false,
@@ -134,4 +134,4 @@ export const GameCard: React.FC<GameCardProps> = ({
       {getStatusText()}
     </Card>
   );
-};
+});

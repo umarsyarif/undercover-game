@@ -2,18 +2,21 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GameHeader } from './GameHeader';
+import { Home } from 'lucide-react';
 import type { Player, GameState } from '../types/gameTypes';
 
 interface GameOverPhaseProps {
   gameState: GameState;
   winnerPlayers: Player[];
   onBackToSetup: () => void;
+  onContinueWithSamePlayers: () => void;
 }
 
 export const GameOverPhase: React.FC<GameOverPhaseProps> = ({
   gameState,
   winnerPlayers,
-  onBackToSetup
+  onBackToSetup,
+  onContinueWithSamePlayers
 }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-100 w-screen">
@@ -62,12 +65,22 @@ export const GameOverPhase: React.FC<GameOverPhaseProps> = ({
             </div>
           </div>
 
-          <Button
-            onClick={onBackToSetup}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-full text-lg"
-          >
-            Lanjut
-          </Button>
+          <div className="space-y-3">
+            <Button
+              onClick={onContinueWithSamePlayers}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-full text-lg"
+            >
+              Lanjut
+            </Button>
+            
+            <Button
+              onClick={onBackToSetup}
+              className="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-full text-lg flex items-center justify-center gap-2"
+            >
+              <Home className="h-5 w-5" />
+              Home
+            </Button>
+          </div>
         </Card>
       </div>
     </div>

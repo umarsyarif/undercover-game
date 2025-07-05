@@ -10,157 +10,163 @@ import { CardSelectionPhase } from './components/CardSelectionPhase';
 import { DescriptionPhase } from './components/DescriptionPhase';
 import { VotingPhase } from './components/VotingPhase';
 import { GameOverPhase } from './components/GameOverPhase';
-import { useGameState } from './hooks/useGameState';
-import { useModalManager } from './hooks/useModalManager';
-import { usePlayerManagement } from './hooks/usePlayerManagement';
-import { useWordManagement } from './hooks/useWordManagement';
-import { useGamePhases } from './hooks/useGamePhases';
-import { GameLogic } from './services/gameLogic';
+import { useGameService } from './hooks/useGameService';
 import type { Player } from './types/gameTypes';
 
-function App() {
-  // Initialize custom hooks
-  const { gameState, updateGameState, initializeGame, resetGame, checkWinConditions, getRandomWordPair } = useGameState();
-  const { modals, openModal, closeModal, closeAllModals } = useModalManager();
-  const playerManagement = usePlayerManagement();
-  const wordManagement = useWordManagement();
-  
-  // Initialize game phases hook with dependencies
-  const gamePhases = useGamePhases(
+function AppWithServices() {
+  const {
     gameState,
-    updateGameState,
-    checkWinConditions,
+    config,
+    modals,
+    // Actions
+    startNewGame,
+    selectCard,
+    submitPlayerName,
+    revealWordNext,
+    goToVoting,
+    selectPlayerForElimination,
+    eliminatePlayer,
+    processMrWhiteGuess,
+    updateMrWhiteGuess,
+    transitionToPhase,
+    resetGame,
+    // Modal actions
     openModal,
-    closeModal
-  );
+    closeModal,
+    // Config actions
+    updateConfig,
+    // Queries
+    getCurrentPlayer,
+    getPlayerByCardIndex,
+    isCardAvailable,
+    getOrderedPlayers,
+    getDescriptionPhaseOrder,
+    getVotingPhaseOrder,
+    getActivePlayers,
+    getRemainingCounts,
+    getAvailableWordCount,
+    isStartButtonEnabled,
+    canIncreaseUndercover,
+    canDecreaseUndercover,
+    canIncreaseMrWhite,
+    canDecreaseMrWhite,
+    // State
+    playerName,
+    setPlayerName,
+    isRefreshing,
+    setIsRefreshing
+  } = useGameService();
 
-  // Helper functions that use GameLogic service
-  const getCurrentPlayer = () => GameLogic.getCurrentPlayer(gameState);
-  const getPlayerByCardIndex = (cardIndex: number): Player | undefined => {
-    const player = GameLogic.getPlayerByCardIndex(gameState.players, cardIndex);
-    return player || undefined;
-  };
-  const isCardAvailable = (cardIndex: number) => GameLogic.isCardAvailable(gameState.players, cardIndex);
-  const getOrderedPlayers = () => GameLogic.getOrderedPlayers(gameState.players);
-  const getDescriptionPhaseOrder = () => GameLogic.getDescriptionPhaseOrder(gameState.players);
-  const getVotingPhaseOrder = () => GameLogic.getVotingPhaseOrder(gameState.players);
-  const getActivePlayers = () => GameLogic.getActivePlayers(gameState.players);
-  const getRemainingCounts = () => {
-    const counts = GameLogic.getRemainingCounts(gameState.players);
-    return {
-      undercovers: counts.undercover,
-      mrWhites: counts.mrWhite,
-      total: counts.civilians + counts.undercover + counts.mrWhite
-    };
-  };
-
-  // Game initialization handler
-  const handleStart = () => {
-    if (playerManagement.isStartButtonEnabled()) {
-      const config = playerManagement.getPlayerConfig();
-      const result = initializeGame(config);
+  // Event handlers
+  const handleStart = async () => {
+    if (isStartButtonEnabled()) {
+      const result = await startNewGame({
+        totalPlayers: config.totalPlayers,
+        undercover: config.undercover,
+        mrWhite: config.mrWhite
+      });
       if (!result.success) {
         openModal('showWordManagementModal');
       }
     }
   };
 
-  // Word refresh handler
-  const handleRefreshWords = () => {
-    wordManagement.handleRefreshWords(
-      gameState,
-      updateGameState,
-      () => openModal('showWordManagementModal')
-    );
+  const handleRefreshWords = async () => {
+    setIsRefreshing(true);
+    try {
+      const result = await startNewGame({
+        totalPlayers: config.totalPlayers,
+        undercover: config.undercover,
+        mrWhite: config.mrWhite
+      });
+      if (!result.success) {
+        openModal('showWordManagementModal');
+      }
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  // Words updated handler
-  const handleWordsUpdated = () => {
-    const config = playerManagement.getPlayerConfig();
-    return wordManagement.handleWordsUpdated(initializeGame, config);
+  const handleWordsUpdated = async () => {
+    const result = await startNewGame({
+      totalPlayers: config.totalPlayers,
+      undercover: config.undercover,
+      mrWhite: config.mrWhite
+    });
+    return result.success;
   };
 
-  // Name submission handler
   const handleNameSubmit = () => {
-    gamePhases.handleNameSubmit(playerManagement.playerName);
-    playerManagement.resetPlayerName();
+    if (playerName.trim()) {
+      submitPlayerName(playerName.trim());
+      setPlayerName('');
+    }
   };
 
-  // Get current player for display
-  const currentPlayer = getCurrentPlayer();
-
-  // Handler functions using game phases hook
-  const handleWordRevealNext = () => {
-    gamePhases.handleWordRevealNext(playerManagement.totalPlayers);
-  };
-
-  // Back to setup handler
   const handleBackToSetup = () => {
     resetGame();
     closeModal('showGameOverModal');
   };
-  
-  // Continue with same players handler
-  const handleContinueWithSamePlayers = () => {
-    // Reset the random start player
-    GameLogic.resetRandomStart();
-    
-    // Get a new word pair
-    const newWordPair = getRandomWordPair();
-    
-    if (!newWordPair) {
-      // If no words are available, show word management modal
-      openModal('showWordManagementModal');
-      return;
-    }
-    
-    // Reset player state but keep names
-    const resetPlayers = gameState.players.map(player => ({
-      ...player,
-      word: player.role === 'civilian' ? newWordPair.civilian :
-            player.role === 'undercover' ? newWordPair.undercover : '',
-      hasRevealed: false,
-      cardIndex: -1,
-      isEliminated: false
-    }));
-    
-    // Reset game state but keep players
-    updateGameState({
-      phase: 'card-selection',
-      currentPlayerIndex: 0,
-      selectedCard: null,
-      players: resetPlayers,
-      round: 1,
-      gameWords: newWordPair,
-      selectedPlayerToEliminate: null,
-      eliminatedPlayer: null,
-      winner: null,
-      mrWhiteGuess: '',
-      showingWord: false
-    });
-    
-    closeModal('showGameOverModal');
+
+  const handleCardSelect = (cardIndex: number) => {
+    selectCard(cardIndex);
   };
+
+  const handleTurnModalNext = () => {
+    closeModal('showTurnModal');
+  };
+
+  const handleWordRevealNext = () => {
+    revealWordNext(config.totalPlayers);
+  };
+
+  const handleGoToVoting = () => {
+    goToVoting();
+  };
+
+  const handlePlayerSelect = (playerId: number) => {
+    selectPlayerForElimination(playerId);
+  };
+
+  const handleEliminatePlayer = () => {
+    if (gameState.selectedPlayerToEliminate !== null) {
+      eliminatePlayer(gameState.selectedPlayerToEliminate);
+    }
+  };
+
+  const handleEliminationConfirm = () => {
+    closeModal('showEliminationModal');
+    transitionToPhase('description');
+  };
+
+  const handleMrWhiteGuess = () => {
+    if (gameState.mrWhiteGuess?.trim()) {
+      processMrWhiteGuess(gameState.mrWhiteGuess.trim());
+    }
+  };
+
+  // Get current player for display
+  const currentPlayer = getCurrentPlayer();
 
   // Render different screens based on game phase
   if (gameState.phase === 'setup') {
     return (
       <>
         <PlayerSetup
-          totalPlayers={playerManagement.totalPlayers}
-          civilians={playerManagement.civilians}
-          undercover={playerManagement.undercover}
-          mrWhite={playerManagement.mrWhite}
-          onTotalPlayersChange={playerManagement.handleTotalPlayersChange}
-          onUndercoverChange={playerManagement.handleUndercoverChange}
-          onMrWhiteChange={playerManagement.handleMrWhiteChange}
-          canIncreaseUndercover={playerManagement.canIncreaseUndercover}
-          canDecreaseUndercover={playerManagement.canDecreaseUndercover}
-          canIncreaseMrWhite={playerManagement.canIncreaseMrWhite}
-          canDecreaseMrWhite={playerManagement.canDecreaseMrWhite}
-          isStartButtonEnabled={playerManagement.isStartButtonEnabled}
+          totalPlayers={config.totalPlayers}
+          civilians={config.totalPlayers - config.undercover - config.mrWhite}
+          undercover={config.undercover}
+          mrWhite={config.mrWhite}
+          onTotalPlayersChange={(value) => updateConfig({ totalPlayers: value })}
+          onUndercoverChange={(value) => updateConfig({ undercover: value })}
+          onMrWhiteChange={(value) => updateConfig({ mrWhite: value })}
+          canIncreaseUndercover={canIncreaseUndercover()}
+          canDecreaseUndercover={canDecreaseUndercover()}
+          canIncreaseMrWhite={canIncreaseMrWhite()}
+          canDecreaseMrWhite={canDecreaseMrWhite()}
+          isStartButtonEnabled={isStartButtonEnabled}
           onStart={handleStart}
-          availableWords={wordManagement.getAvailableWordCount()}
+          availableWords={getAvailableWordCount()}
         />
         
         <WordManagementModal
@@ -177,10 +183,10 @@ function App() {
       <>
         <CardSelectionPhase
           gameState={gameState}
-          totalPlayers={playerManagement.totalPlayers}
-          isRefreshing={wordManagement.isRefreshing}
+          totalPlayers={config.totalPlayers}
+          isRefreshing={isRefreshing}
           onBack={handleBackToSetup}
-          onCardSelect={gamePhases.handleCardSelect}
+          onCardSelect={handleCardSelect}
           onRefreshWords={handleRefreshWords}
           getPlayerByCardIndex={getPlayerByCardIndex}
           isCardAvailable={isCardAvailable}
@@ -197,7 +203,7 @@ function App() {
             </DialogHeader>
             <div className="text-center py-4">
               <p className="text-gray-600 mb-6">Silakan pilih kartu untuk melihat kata Anda</p>
-              <Button onClick={gamePhases.handleTurnModalNext} className="bg-green-500 hover:bg-green-600 text-white px-8 py-2 rounded-full">
+              <Button onClick={handleTurnModalNext} className="bg-green-500 hover:bg-green-600 text-white px-8 py-2 rounded-full">
                 OK
               </Button>
             </div>
@@ -218,8 +224,8 @@ function App() {
             <div className="space-y-4">
               <Input
                 placeholder="Masukkan nama"
-                value={playerManagement.playerName}
-                onChange={(e) => playerManagement.setPlayerName(e.target.value)}
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
                 className="text-center"
                 onKeyPress={(e) => e.key === 'Enter' && handleNameSubmit()}
               />
@@ -228,7 +234,7 @@ function App() {
               </p>
               <Button
                 onClick={handleNameSubmit}
-                disabled={!playerManagement.playerName.trim()}
+                disabled={!playerName.trim()}
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-full"
               >
                 OK
@@ -286,7 +292,7 @@ function App() {
         orderedPlayers={orderedPlayers}
         round={gameState.round}
         onBack={handleBackToSetup}
-        onGoToVoting={gamePhases.handleGoToVoting}
+        onGoToVoting={handleGoToVoting}
         getRemainingCounts={getRemainingCounts}
       />
     );
@@ -301,9 +307,9 @@ function App() {
         <VotingPhase
           sortedPlayers={sortedPlayers}
           selectedPlayerToEliminate={gameState.selectedPlayerToEliminate}
-          onBack={() => updateGameState({ phase: 'description' })}
-          onPlayerSelect={gamePhases.handlePlayerSelect}
-          onEliminatePlayer={gamePhases.handleEliminatePlayer}
+          onBack={() => transitionToPhase('description')}
+          onPlayerSelect={handlePlayerSelect}
+          onEliminatePlayer={handleEliminatePlayer}
           getRemainingCounts={getRemainingCounts}
         />
 
@@ -335,7 +341,7 @@ function App() {
                     )}
                   </div>
                   <Button
-                    onClick={gamePhases.handleEliminationConfirm}
+                    onClick={handleEliminationConfirm}
                     className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded-full"
                   >
                     Lanjutkan
@@ -374,19 +380,14 @@ function App() {
               <div className="space-y-4">
                 <Input
                   placeholder="Masukkan tebakan kata civilian"
-                  value={gameState.mrWhiteGuess}
-                  onChange={(e) => updateGameState({ mrWhiteGuess: e.target.value })}
+                  value={gameState.mrWhiteGuess || ''}
+                  onChange={(e) => updateMrWhiteGuess(e.target.value)}
                   className="text-center text-lg"
-                  onKeyPress={(e) => e.key === 'Enter' && gameState.mrWhiteGuess.trim() && gamePhases.handleMrWhiteGuess()}
+                  onKeyPress={(e) => e.key === 'Enter' && gameState.mrWhiteGuess?.trim() && handleMrWhiteGuess()}
                 />
                 <Button
-                  onClick={() => {
-                    console.log('Button clicked!');
-                    console.log('Button disabled:', !gameState.mrWhiteGuess.trim());
-                    console.log('Current input value:', gameState.mrWhiteGuess);
-                    gamePhases.handleMrWhiteGuess();
-                  }}
-                  disabled={!gameState.mrWhiteGuess.trim()}
+                  onClick={handleMrWhiteGuess}
+                  disabled={!gameState.mrWhiteGuess?.trim()}
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-full text-lg"
                 >
                   Tebak!
@@ -410,7 +411,7 @@ function App() {
                 Mr. White menebak kata civilian...
               </p>
               <Button
-                onClick={gamePhases.handleMrWhiteGuess}
+                onClick={handleMrWhiteGuess}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2 rounded-full"
               >
                 Reveal Result
@@ -436,7 +437,6 @@ function App() {
           gameState={gameState}
           winnerPlayers={winnerPlayers}
           onBackToSetup={handleBackToSetup}
-          onContinueWithSamePlayers={handleContinueWithSamePlayers}
         />
 
         {/* Game Over Modal */}
@@ -468,4 +468,4 @@ function App() {
   return null;
 }
 
-export default App;
+export default AppWithServices;

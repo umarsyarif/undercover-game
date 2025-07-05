@@ -101,11 +101,11 @@ export class WordService {
 
       const data: WordApiResponse = await response.json();
       
-      if (!data.output || !data.output.data || !Array.isArray(data.output.data)) {
+      if (!data.data || !Array.isArray(data.data)) {
         throw new Error('Invalid API response format');
       }
 
-      return data.output.data.map(word => ({
+      return data.data.map(word => ({
         civilian: word.civilian,
         undercover: word.undercover,
         played: false

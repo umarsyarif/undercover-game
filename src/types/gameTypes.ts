@@ -41,10 +41,15 @@ export interface WordApiRequest {
 }
 
 export interface WordApiResponse {
-  output: {
-    data: Array<{
-      civilian: string;
-      undercover: string;
-    }>;
-  };
+  data: Array<{
+    civilian: string;
+    undercover: string;
+  }>;
+}
+
+export interface PlayerConfig {
+  totalPlayers: number;
+  undercover: number;
+  mrWhite: number;
+  civilians: number;
 }
