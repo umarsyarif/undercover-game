@@ -73,14 +73,14 @@ export const GameUI: React.FC<GameUIProps> = ({
           civilians={civilians}
           undercover={config.undercover}
           mrWhite={config.mrWhite}
-          onTotalPlayersChange={(value) => onConfigChange({ totalPlayers: value })}
-          onUndercoverChange={(value) => onConfigChange({ undercover: value })}
-          onMrWhiteChange={(value) => onConfigChange({ mrWhite: value })}
-          canIncreaseUndercover={canIncreaseUndercover}
-          canDecreaseUndercover={canDecreaseUndercover}
-          canIncreaseMrWhite={canIncreaseMrWhite}
-          canDecreaseMrWhite={canDecreaseMrWhite}
-          isStartButtonEnabled={isStartButtonEnabled}
+          onTotalPlayersChange={(value) => onConfigChange({ totalPlayers: value[0] })}
+          onUndercoverChange={(value) => onConfigChange({ undercover: value ? 1 : 0 })}
+          onMrWhiteChange={(value) => onConfigChange({ mrWhite: value ? 1 : 0 })}
+          canIncreaseUndercover={typeof canIncreaseUndercover === 'function' ? canIncreaseUndercover() : canIncreaseUndercover}
+          canDecreaseUndercover={typeof canDecreaseUndercover === 'function' ? canDecreaseUndercover() : canDecreaseUndercover}
+          canIncreaseMrWhite={typeof canIncreaseMrWhite === 'function' ? canIncreaseMrWhite() : canIncreaseMrWhite}
+          canDecreaseMrWhite={typeof canDecreaseMrWhite === 'function' ? canDecreaseMrWhite() : canDecreaseMrWhite}
+          isStartButtonEnabled={typeof isStartButtonEnabled === 'function' ? isStartButtonEnabled() : isStartButtonEnabled}
           onStart={onStart}
           availableWords={availableWordCount}
         />
@@ -343,6 +343,7 @@ export const GameUI: React.FC<GameUIProps> = ({
           gameState={gameState}
           winnerPlayers={winnerPlayers}
           onBackToSetup={onBackToSetup}
+          onContinueWithSamePlayers={onRefreshWords}
         />
 
         {/* Game Over Modal */}

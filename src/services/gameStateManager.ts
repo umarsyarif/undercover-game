@@ -220,9 +220,11 @@ export class GameStateManager {
     return result.success;
   }
 
-  async eliminatePlayer(playerId: number): Promise<boolean> {
-    const selectResult = await this.executeAction('selectPlayerForElimination', playerId);
-    if (!selectResult.success) return false;
+  async eliminatePlayer(playerId?: number): Promise<boolean> {
+    if (playerId !== undefined) {
+      const selectResult = await this.executeAction('selectPlayerForElimination', playerId);
+      if (!selectResult.success) return false;
+    }
     
     const eliminateResult = await this.executeAction('eliminatePlayer');
     return eliminateResult.success;

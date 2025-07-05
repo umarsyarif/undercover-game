@@ -102,7 +102,7 @@ export class GameActionService {
 
   static revealWordNext(
     gameState: GameState,
-    totalPlayers: number
+    totalPlayers?: number
   ): GameActionResult {
     if (gameState.selectedCard === null) {
       return {
@@ -130,10 +130,13 @@ export class GameActionService {
         delay: 200 // Prevent word glimpse
       };
 
+      // Use the total players from the state if not provided
+      const effectiveTotalPlayers = totalPlayers ?? gameState.players.length;
+
       // Determine next action after delay
-      if (gameState.currentPlayerIndex < totalPlayers - 1) {
+      if (gameState.currentPlayerIndex < effectiveTotalPlayers - 1) {
         // Advance to next player
-        const advancedState = GameService.advanceToNextPlayer(newState, totalPlayers);
+        const advancedState = GameService.advanceToNextPlayer(newState, effectiveTotalPlayers);
         
         if (gameState.round > 1) {
           sideEffects.openModal = 'showTurnModal';
@@ -320,8 +323,14 @@ export class GameActionService {
   }
 
   // Game management actions
-  static startNewGame(config: GameConfig): GameActionResult {
+  static startNewGame(config?: GameConfig): GameActionResult {
     try {
+      if (!config) {
+        return {
+          success: false,
+          error: 'Game configuration is required'
+        };
+      }
       const newState = GameService.initializeGame(config);
       
       return {

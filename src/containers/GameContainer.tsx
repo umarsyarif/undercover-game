@@ -3,16 +3,10 @@ import { useGameService } from '../hooks/useGameService';
 import { GameHelpers } from '../utils/gameHelpers';
 
 // GameUI and GameContainerProps will be defined inline for now
-interface GameUIProps {
-  gameState: any;
-  config: any;
-  modals: any;
-  playerName: string;
-  isRefreshing: boolean;
-  computedValues: any;
-  serviceQueries: any;
-  handlers: any;
-}
+// Import the GameUIProps interface from containerTypes.ts
+import { GameUIProps as GameUIPropsType } from '../types/containerTypes';
+
+interface GameUIProps extends GameUIPropsType {}
 
 interface GameContainerProps {}
 
@@ -50,7 +44,8 @@ export const GameContainer: React.FC<GameContainerProps> = () => {
         const result = await gameService.startNewGame({
           totalPlayers: gameService.config.totalPlayers,
           undercover: gameService.config.undercover,
-          mrWhite: gameService.config.mrWhite
+          mrWhite: gameService.config.mrWhite,
+          civilians: gameService.config.totalPlayers - gameService.config.undercover - gameService.config.mrWhite
         });
         if (!result.success) {
           gameService.openModal('showWordManagementModal');
@@ -64,7 +59,8 @@ export const GameContainer: React.FC<GameContainerProps> = () => {
         const result = await gameService.startNewGame({
           totalPlayers: gameService.config.totalPlayers,
           undercover: gameService.config.undercover,
-          mrWhite: gameService.config.mrWhite
+          mrWhite: gameService.config.mrWhite,
+          civilians: gameService.config.totalPlayers - gameService.config.undercover - gameService.config.mrWhite
         });
         if (!result.success) {
           gameService.openModal('showWordManagementModal');
@@ -78,7 +74,8 @@ export const GameContainer: React.FC<GameContainerProps> = () => {
       const result = await gameService.startNewGame({
         totalPlayers: gameService.config.totalPlayers,
         undercover: gameService.config.undercover,
-        mrWhite: gameService.config.mrWhite
+        mrWhite: gameService.config.mrWhite,
+        civilians: gameService.config.totalPlayers - gameService.config.undercover - gameService.config.mrWhite
       });
       return result.success;
     },
@@ -162,7 +159,14 @@ export const GameContainer: React.FC<GameContainerProps> = () => {
     descriptionPhaseOrder: gameService.getDescriptionPhaseOrder(),
     votingPhaseOrder: gameService.getVotingPhaseOrder(),
     activePlayers: gameService.getActivePlayers(),
-    remainingCounts: gameService.getRemainingCounts(),
+    remainingCounts: (() => {
+      const counts = gameService.getRemainingCounts();
+      return {
+        undercovers: counts.undercover,
+        mrWhites: counts.mrWhite,
+        total: counts.civilians + counts.undercover + counts.mrWhite
+      };
+    })(),
     availableWordCount: gameService.getAvailableWordCount(),
     
     // Player configuration helpers

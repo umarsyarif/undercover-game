@@ -30,11 +30,11 @@ export interface GameUIProps {
   };
   availableWordCount: number;
   civilians: number;
-  canIncreaseUndercover: boolean;
-  canDecreaseUndercover: boolean;
-  canIncreaseMrWhite: boolean;
-  canDecreaseMrWhite: boolean;
-  isStartButtonEnabled: boolean;
+  canIncreaseUndercover: boolean | (() => boolean);
+  canDecreaseUndercover: boolean | (() => boolean);
+  canIncreaseMrWhite: boolean | (() => boolean);
+  canDecreaseMrWhite: boolean | (() => boolean);
+  isStartButtonEnabled: boolean | (() => boolean);
   sortedPlayersForVoting: Player[];
   winnerPlayers: Player[];
   
@@ -70,8 +70,8 @@ export interface GameUIProps {
   onMrWhiteGuessChange: (guess: string) => void;
   
   // Modal handlers
-  openModal: (modalName: keyof ModalState) => void;
-  closeModal: (modalName: keyof ModalState) => void;
+  openModal: (modalName: string) => void;
+  closeModal: (modalName: string) => void;
 }
 
 /**

@@ -29,7 +29,7 @@ export interface GameServiceHook {
   submitPlayerName: (playerName: string) => Promise<boolean>;
   revealWordNext: (totalPlayers: number) => Promise<boolean>;
   selectPlayerForElimination: (playerId: number) => Promise<boolean>;
-  eliminatePlayer: () => Promise<boolean>;
+  eliminatePlayer: (playerId?: number) => Promise<boolean>;
   confirmElimination: () => Promise<boolean>;
   processMrWhiteGuess: (guess: string) => Promise<boolean>;
   startNewRound: () => Promise<boolean>;
@@ -37,7 +37,7 @@ export interface GameServiceHook {
   transitionToPhase: (phase: string) => Promise<boolean>;
   refreshWords: () => Promise<boolean>;
   updateMrWhiteGuess: (guess: string) => void;
-  startNewGame: () => Promise<boolean>;
+  startNewGame: (config?: GameConfig) => Promise<{success: boolean}>;
   goToVoting: () => Promise<boolean>;
   openModal: (modalName: string) => void;
   closeModal: (modalName: string) => void;
@@ -221,7 +221,13 @@ export function useGameService(options: UseGameServiceOptions = {}): GameService
     return result.success;
   }, [executeAction]);
 
-  const eliminatePlayer = useCallback(async (): Promise<boolean> => {
+  const eliminatePlayer = useCallback(async (playerId?: number): Promise<boolean> => {
+    if (playerId !== undefined) {
+      // First select the player to eliminate
+      const selectResult = await executeAction('selectPlayerForElimination', playerId);
+      if (!selectResult.success) return false;
+    }
+    // Then eliminate the selected player
     const result = await executeAction('eliminatePlayer');
     return result.success;
   }, [executeAction]);
@@ -360,17 +366,6 @@ export function useGameService(options: UseGameServiceOptions = {}): GameService
     return gameManagerRef.current?.getDebugInfo() || {};
   }, [gameState]);
 
-  // Additional methods for compatibility
-  const startNewGame = useCallback(async (): Promise<boolean> => {
-    const result = await executeAction('resetGame');
-    return result.success;
-  }, [executeAction]);
-
-  const goToVoting = useCallback(async (): Promise<boolean> => {
-    const result = await executeAction('transitionToPhase', 'voting');
-    return result.success;
-  }, [executeAction]);
-
   const openModal = useCallback((modalName: string) => {
     setModals(prev => ({ ...prev, [modalName]: true }));
   }, []);
@@ -382,6 +377,26 @@ export function useGameService(options: UseGameServiceOptions = {}): GameService
   const updateConfig = useCallback((newConfig: Partial<GameConfig>) => {
     setConfig(prev => ({ ...prev, ...newConfig }));
   }, []);
+
+  // Additional methods for compatibility
+  const startNewGame = useCallback(async (config?: GameConfig): Promise<{success: boolean}> => {
+    if (config) {
+      // If config is provided, update it first
+      updateConfig(config);
+      // Then initialize the game with the updated config
+      const result = await executeAction('startNewGame', config);
+      return { success: result.success };
+    } else {
+      // If no config provided, just reset the game
+      const result = await executeAction('resetGame');
+      return { success: result.success };
+    }
+  }, [executeAction, updateConfig]);
+
+  const goToVoting = useCallback(async (): Promise<boolean> => {
+    const result = await executeAction('transitionToPhase', 'voting');
+    return result.success;
+  }, [executeAction]);
 
   const setPlayerName = useCallback((name: string) => {
     setPlayerNameState(name);

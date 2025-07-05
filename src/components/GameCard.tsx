@@ -5,7 +5,7 @@ import type { Player } from '../types/gameTypes';
 
 interface GameCardProps {
   index: number;
-  player?: Player;
+  player?: Player | null;
   isSelected?: boolean;
   isAvailable?: boolean;
   onClick?: () => void;

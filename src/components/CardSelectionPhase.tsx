@@ -12,7 +12,7 @@ interface CardSelectionPhaseProps {
   onBack: () => void;
   onCardSelect: (cardIndex: number) => void;
   onRefreshWords: () => void;
-  getPlayerByCardIndex: (cardIndex: number) => Player | undefined;
+  getPlayerByCardIndex: (cardIndex: number) => Player | undefined | null;
   isCardAvailable: (cardIndex: number) => boolean;
   getRemainingCounts: () => { undercovers: number; mrWhites: number; total: number };
 }

@@ -63,7 +63,8 @@ function AppWithServices() {
       const result = await startNewGame({
         totalPlayers: config.totalPlayers,
         undercover: config.undercover,
-        mrWhite: config.mrWhite
+        mrWhite: config.mrWhite,
+        civilians: config.totalPlayers - config.undercover - config.mrWhite
       });
       if (!result.success) {
         openModal('showWordManagementModal');
@@ -77,7 +78,8 @@ function AppWithServices() {
       const result = await startNewGame({
         totalPlayers: config.totalPlayers,
         undercover: config.undercover,
-        mrWhite: config.mrWhite
+        mrWhite: config.mrWhite,
+        civilians: config.totalPlayers - config.undercover - config.mrWhite
       });
       if (!result.success) {
         openModal('showWordManagementModal');
@@ -91,7 +93,8 @@ function AppWithServices() {
     const result = await startNewGame({
       totalPlayers: config.totalPlayers,
       undercover: config.undercover,
-      mrWhite: config.mrWhite
+      mrWhite: config.mrWhite,
+      civilians: config.totalPlayers - config.undercover - config.mrWhite
     });
     return result.success;
   };
@@ -147,6 +150,16 @@ function AppWithServices() {
 
   // Get current player for display
   const currentPlayer = getCurrentPlayer();
+  
+  // Create a wrapper for getRemainingCounts to match the expected interface
+  const getRemainingCountsWrapper = () => {
+    const counts = getRemainingCounts();
+    return {
+      undercovers: counts.undercover,
+      mrWhites: counts.mrWhite,
+      total: counts.civilians + counts.undercover + counts.mrWhite
+    };
+  };
 
   // Render different screens based on game phase
   if (gameState.phase === 'setup') {
@@ -157,9 +170,9 @@ function AppWithServices() {
           civilians={config.totalPlayers - config.undercover - config.mrWhite}
           undercover={config.undercover}
           mrWhite={config.mrWhite}
-          onTotalPlayersChange={(value) => updateConfig({ totalPlayers: value })}
-          onUndercoverChange={(value) => updateConfig({ undercover: value })}
-          onMrWhiteChange={(value) => updateConfig({ mrWhite: value })}
+          onTotalPlayersChange={(value) => updateConfig({ totalPlayers: value[0] })}
+          onUndercoverChange={(value) => updateConfig({ undercover: value ? 1 : 0 })}
+          onMrWhiteChange={(value) => updateConfig({ mrWhite: value ? 1 : 0 })}
           canIncreaseUndercover={canIncreaseUndercover()}
           canDecreaseUndercover={canDecreaseUndercover()}
           canIncreaseMrWhite={canIncreaseMrWhite()}
@@ -190,7 +203,7 @@ function AppWithServices() {
           onRefreshWords={handleRefreshWords}
           getPlayerByCardIndex={getPlayerByCardIndex}
           isCardAvailable={isCardAvailable}
-          getRemainingCounts={getRemainingCounts}
+          getRemainingCounts={getRemainingCountsWrapper}
         />
 
         {/* Turn Modal for non-first rounds */}
@@ -293,7 +306,7 @@ function AppWithServices() {
         round={gameState.round}
         onBack={handleBackToSetup}
         onGoToVoting={handleGoToVoting}
-        getRemainingCounts={getRemainingCounts}
+        getRemainingCounts={getRemainingCountsWrapper}
       />
     );
   }
@@ -310,7 +323,7 @@ function AppWithServices() {
           onBack={() => transitionToPhase('description')}
           onPlayerSelect={handlePlayerSelect}
           onEliminatePlayer={handleEliminatePlayer}
-          getRemainingCounts={getRemainingCounts}
+          getRemainingCounts={getRemainingCountsWrapper}
         />
 
         {/* Elimination Confirmation Modal */}
@@ -437,6 +450,7 @@ function AppWithServices() {
           gameState={gameState}
           winnerPlayers={winnerPlayers}
           onBackToSetup={handleBackToSetup}
+          onContinueWithSamePlayers={handleRefreshWords}
         />
 
         {/* Game Over Modal */}
