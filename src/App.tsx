@@ -130,7 +130,7 @@ function App() {
       currentPlayerIndex: 0,
       selectedCard: null,
       players: resetPlayers,
-      round: 1,
+      round: 2, // Set round to 2 to skip name input phase
       gameWords: newWordPair,
       selectedPlayerToEliminate: null,
       eliminatedPlayer: null,
@@ -140,6 +140,11 @@ function App() {
     });
     
     closeModal('showGameOverModal');
+    
+    // Show turn modal for the first player after a short delay
+    setTimeout(() => {
+      openModal('showTurnModal');
+    }, 300);
   };
 
   // Render different screens based on game phase
@@ -189,7 +194,11 @@ function App() {
 
         {/* Turn Modal for non-first rounds */}
         <Dialog open={modals.showTurnModal} onOpenChange={() => closeModal('showTurnModal')}>
-          <DialogContent className="max-w-sm mx-auto">
+          <DialogContent 
+            className="max-w-sm mx-auto [&>button]:hidden" 
+            onPointerDownOutside={e => e.preventDefault()}
+            onEscapeKeyDown={e => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle className="text-center text-lg">
                 Giliran {currentPlayer?.name || `Player ${gameState.currentPlayerIndex + 1}`}
@@ -328,11 +337,6 @@ function App() {
                     <p className="text-lg font-semibold">
                       Role: <span className="capitalize">{gameState.eliminatedPlayer.role}</span>
                     </p>
-                    {gameState.eliminatedPlayer.role !== 'mrwhite' && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        Word: {gameState.eliminatedPlayer.word}
-                      </p>
-                    )}
                   </div>
                   <Button
                     onClick={gamePhases.handleEliminationConfirm}

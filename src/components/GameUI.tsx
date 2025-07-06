@@ -111,7 +111,11 @@ export const GameUI: React.FC<GameUIProps> = ({
 
         {/* Turn Modal for non-first rounds */}
         <Dialog open={modals.showTurnModal} onOpenChange={() => closeModal('showTurnModal')}>
-          <DialogContent className="max-w-sm mx-auto">
+          <DialogContent 
+            className="max-w-sm mx-auto [&>button]:hidden"
+            onPointerDownOutside={e => e.preventDefault()}
+            onEscapeKeyDown={e => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle className="text-center text-lg">
                 Giliran {currentPlayer?.name || `Player ${gameState.currentPlayerIndex + 1}`}

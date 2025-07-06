@@ -37,7 +37,7 @@ export interface GameServiceHook {
   transitionToPhase: (phase: string) => Promise<boolean>;
   refreshWords: () => Promise<boolean>;
   updateMrWhiteGuess: (guess: string) => void;
-  startNewGame: (config?: GameConfig) => Promise<{success: boolean}>;
+  startNewGame: (config?: GameConfig, round?: number) => Promise<{success: boolean}>;
   goToVoting: () => Promise<boolean>;
   openModal: (modalName: string) => void;
   closeModal: (modalName: string) => void;
@@ -379,12 +379,18 @@ export function useGameService(options: UseGameServiceOptions = {}): GameService
   }, []);
 
   // Additional methods for compatibility
-  const startNewGame = useCallback(async (config?: GameConfig): Promise<{success: boolean}> => {
+  const startNewGame = useCallback(async (config?: GameConfig, round: number = 1): Promise<{success: boolean}> => {
     if (config) {
       // If config is provided, update it first
       updateConfig(config);
       // Then initialize the game with the updated config
       const result = await executeAction('startNewGame', config);
+      
+      // If round > 1, update the game state to skip name input
+      if (result.success && round > 1) {
+        await executeAction('updateGameState', { round });
+      }
+      
       return { success: result.success };
     } else {
       // If no config provided, just reset the game

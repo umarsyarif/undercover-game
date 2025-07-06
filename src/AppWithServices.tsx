@@ -80,9 +80,14 @@ function AppWithServices() {
         undercover: config.undercover,
         mrWhite: config.mrWhite,
         civilians: config.totalPlayers - config.undercover - config.mrWhite
-      });
+      }, 2); // Pass round 2 to indicate continuing with same players
       if (!result.success) {
         openModal('showWordManagementModal');
+      } else {
+        // Show turn modal for the first player after a short delay
+        setTimeout(() => {
+          openModal('showTurnModal');
+        }, 300);
       }
     } finally {
       setIsRefreshing(false);
@@ -208,7 +213,11 @@ function AppWithServices() {
 
         {/* Turn Modal for non-first rounds */}
         <Dialog open={modals.showTurnModal} onOpenChange={() => closeModal('showTurnModal')}>
-          <DialogContent className="max-w-sm mx-auto">
+          <DialogContent 
+            className="max-w-sm mx-auto [&>button]:hidden"
+            onPointerDownOutside={e => e.preventDefault()}
+            onEscapeKeyDown={e => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle className="text-center text-lg">
                 Giliran {currentPlayer?.name || `Player ${gameState.currentPlayerIndex + 1}`}

@@ -21,6 +21,15 @@ export const useGamePhases = (
     if (gameState.round === 1) {
       openModal('showNameModal');
     } else {
+      // For round 2+ (continuing with same players), automatically assign the card
+      const updatedPlayers = [...gameState.players];
+      updatedPlayers[gameState.currentPlayerIndex].cardIndex = cardIndex;
+      
+      updateGameState({ 
+        players: updatedPlayers,
+        selectedCard: cardIndex
+      });
+      
       openModal('showWordModal');
     }
   };
@@ -77,6 +86,7 @@ export const useGamePhases = (
   // Handle turn modal next
   const handleTurnModalNext = () => {
     closeModal('showTurnModal');
+    // The player will now select a card from the card selection screen
   };
 
   // Handle go to voting

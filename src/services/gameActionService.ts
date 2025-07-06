@@ -443,6 +443,29 @@ export class GameActionService {
       };
     }
   }
+  
+  // Direct state update action
+  static updateGameState(
+    gameState: GameState,
+    updates: Partial<GameState>
+  ): GameActionResult {
+    try {
+      const newState = {
+        ...gameState,
+        ...updates
+      };
+      
+      return {
+        success: true,
+        newState
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
 
   static validateAction(
     gameState: GameState,
