@@ -170,10 +170,26 @@ export class GameService {
       throw new Error('No available word pairs for new round');
     }
 
-    // Reset player states for new round
-    const updatedPlayers = gameState.players.map(player => ({
-      ...player,
+    // Re-assign roles and words
+    const totalPlayers = gameState.players.length;
+    const undercoverCount = gameState.players.filter(p => p.role === 'undercover').length;
+    const mrWhiteCount = gameState.players.filter(p => p.role === 'mrwhite').length;
+
+    const newPlayers = GameLogic.generatePlayers(
+      totalPlayers,
+      undercoverCount,
+      mrWhiteCount,
+      gameWords
+    );
+
+    // Preserve player names and other properties
+    const updatedPlayers = gameState.players.map((player, index) => ({
+      ...newPlayers[index],
+      id: player.id,
+      name: player.name,
+      isEliminated: false,
       hasRevealed: false,
+      isReady: true,
       cardIndex: -1
     }));
 
