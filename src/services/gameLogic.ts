@@ -45,6 +45,7 @@ export class GameLogic {
     for (let i = 0; i < civilians; i++) {
       roles.push('civilian');
     }
+    console.log(roles);
 
     // Shuffle roles
     for (let i = roles.length - 1; i > 0; i--) {

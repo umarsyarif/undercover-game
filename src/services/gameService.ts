@@ -49,6 +49,8 @@ export class GameService {
 
     return {
       phase: 'card-selection',
+      undercoverCount: config.undercover,
+      mrWhiteCount: config.mrWhite,
       currentPlayerIndex: 0,
       selectedCard: null,
       players,
@@ -181,6 +183,7 @@ export class GameService {
       mrWhiteCount,
       gameWords
     );
+    console.log(newPlayers);
 
     // Preserve player names and other properties
     const updatedPlayers = gameState.players.map((player, index) => ({
@@ -309,6 +312,8 @@ export class GameService {
   static resetGame(): GameState {
     return {
       phase: 'setup',
+      undercoverCount: 0,
+      mrWhiteCount: 0,
       currentPlayerIndex: 0,
       selectedCard: null,
       players: [],

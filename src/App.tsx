@@ -114,15 +114,23 @@ function App() {
       return;
     }
     
+    // Re-generate players with new roles but keep names
+    const newPlayers = GameLogic.generatePlayers(
+      gameState.players.length,
+      gameState.undercoverCount,
+      gameState.mrWhiteCount,
+      newWordPair
+    );
+
     // Reset player state but keep names
-    const resetPlayers = gameState.players.map(player => ({
-      ...player,
-      word: player.role === 'civilian' ? newWordPair.civilian :
-            player.role === 'undercover' ? newWordPair.undercover : '',
-      hasRevealed: false,
-      cardIndex: -1,
-      isEliminated: false
-    }));
+    const resetPlayers = gameState.players.map((player, index) => {
+      const newPlayer = newPlayers.find(p => p.id === player.id) || newPlayers[index];
+      return {
+        ...newPlayer,
+        id: player.id, // Keep original ID
+        name: player.name, // Keep original name
+      };
+    });
     
     // Reset game state but keep players
     updateGameState({

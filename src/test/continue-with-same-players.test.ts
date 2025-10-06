@@ -27,6 +27,8 @@ describe('Continue with Same Players Feature', () => {
   // Helper function to create test game state
   const createTestGameState = (): GameState => ({
     phase: 'game-over',
+    undercoverCount: 1,
+    mrWhiteCount: 0,
     currentPlayerIndex: 0,
     selectedCard: null,
     players: [
@@ -295,4 +297,4 @@ describe('Continue with Same Players Feature', () => {
       expect(mockOpenModal).toHaveBeenCalledWith('showTurnModal');
     });
   });
-}); 
+});

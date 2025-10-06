@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GameHeader } from './GameHeader';
-import { Home } from 'lucide-react';
+import { Home, Users, Award, Shield, EyeOff } from 'lucide-react';
 import type { Player, GameState } from '../types/gameTypes';
 
 interface GameOverPhaseProps {
@@ -12,14 +12,34 @@ interface GameOverPhaseProps {
   onContinueWithSamePlayers: () => void;
 }
 
+const RoleIcon = ({ role }: { role: string }) => {
+  switch (role) {
+    case 'civilian':
+      return <Shield className="h-5 w-5 text-blue-500" />;
+    case 'undercover':
+      return <EyeOff className="h-5 w-5 text-red-500" />;
+    case 'mrwhite':
+      return <Users className="h-5 w-5 text-gray-500" />;
+    default:
+      return null;
+  }
+};
+
 export const GameOverPhase: React.FC<GameOverPhaseProps> = ({
   gameState,
-  winnerPlayers,
   onBackToSetup,
   onContinueWithSamePlayers
 }) => {
+  const sortedPlayers = [...gameState.players].sort((a, b) => {
+    const aIsWinner = gameState.winner === a.role;
+    const bIsWinner = gameState.winner === b.role;
+    if (aIsWinner && !bIsWinner) return -1;
+    if (!aIsWinner && bIsWinner) return 1;
+    return 0;
+  });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-100 w-screen">
+    <div className="min-h-screen bg-gray-100 w-screen">
       <GameHeader
         title="Game Over"
         onHome={onBackToSetup}
@@ -27,45 +47,49 @@ export const GameOverPhase: React.FC<GameOverPhaseProps> = ({
         showHelp={false}
       />
 
-      <div className="flex-1 flex items-center justify-center p-6">
-        <Card className="max-w-lg w-full p-8 text-center">
-          <div className="text-8xl mb-6">
-            {gameState.winner === 'civilian' ? '🏆' : 
-             gameState.winner === 'undercover' ? '🎭' : '❓'}
-          </div>
-          
-          <h3 className="text-3xl font-bold mb-4 capitalize">
-            {gameState.winner === 'civilian' ? 'Civilians Win!' :
-             gameState.winner === 'undercover' ? 'Undercover Wins!' :
-             'Mr. White Wins!'}
-          </h3>
-
-          {/* Winner Details */}
-          <div className="bg-gray-100 p-6 rounded-lg mb-6">
-            <h4 className="text-lg font-semibold mb-3">Winners:</h4>
-            <div className="space-y-2">
-              {winnerPlayers.map(player => (
-                <div key={player.id} className="flex items-center justify-center gap-2">
-                  <span className="font-medium">{player.name || `Player ${player.id}`}</span>
-                  <span className="text-sm text-gray-600 capitalize">({player.role})</span>
-                </div>
-              ))}
-            </div>
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full p-6 text-center shadow-lg rounded-2xl">
+          <div className="mb-4">
+            <h3 className="text-2xl font-bold capitalize">
+              {gameState.winner === 'civilian' ? 'Para Civilian Menang!' :
+               gameState.winner === 'undercover' ? 'Para Undercover Menang!' :
+               'Mr. White Menang!'}
+            </h3>
           </div>
 
-          {/* Game Statistics */}
-          <div className="bg-gray-50 p-4 rounded-lg mb-6 text-left">
-            <h4 className="font-semibold mb-2">Game Statistics:</h4>
-            <div className="text-sm space-y-1">
-              <p>Rounds Played: {gameState.round}</p>
-              <p>Civilian Word: {gameState.gameWords.civilian}</p>
-              <p>Undercover Word: {gameState.gameWords.undercover}</p>
-              <p>Total Players: {gameState.players.length}</p>
-              <p>Players Eliminated: {gameState.players.filter(p => p.isEliminated).length}</p>
+          <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <div className="flex justify-center items-center gap-4 mb-2">
+              <div className="flex items-center gap-2">
+                <Shield className="h-6 w-6 text-blue-500" />
+                <span className="font-semibold">{gameState.gameWords.civilian}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <EyeOff className="h-6 w-6 text-red-500" />
+                <span className="font-semibold">{gameState.gameWords.undercover}</span>
+              </div>
             </div>
           </div>
 
           <div className="space-y-3">
+            {sortedPlayers.map(player => (
+              <div key={player.id} className={`p-3 rounded-lg flex items-center justify-between ${player.isEliminated ? 'bg-gray-200' : 'bg-white'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${player.isEliminated ? 'bg-gray-400' : 'bg-green-500'}`}>
+                    {player.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className={`font-medium ${player.isEliminated ? 'text-gray-500 line-through' : ''}`}>
+                    {player.name || `Player ${player.id}`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RoleIcon role={player.role} />
+                  <span className="text-sm capitalize font-semibold">{player.role}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 space-y-3">
             <Button
               onClick={onContinueWithSamePlayers}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-full text-lg"

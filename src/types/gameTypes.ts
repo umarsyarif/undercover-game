@@ -13,6 +13,8 @@ export interface Player {
 
 export interface GameState {
   phase: GamePhase;
+  undercoverCount: number;
+  mrWhiteCount: number;
   currentPlayerIndex: number;
   selectedCard: number | null;
   players: Player[];

@@ -13,6 +13,8 @@ interface GameConfig {
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>({
     phase: 'setup',
+    undercoverCount: 0,
+    mrWhiteCount: 0,
     currentPlayerIndex: 0,
     selectedCard: null,
     players: [],
@@ -82,51 +84,23 @@ export const useGameState = () => {
       return { success: false, reason: 'no-words' };
     }
 
-    const roles: PlayerRole[] = [];
-    
-    for (let i = 0; i < config.civilians; i++) roles.push('civilian');
-    for (let i = 0; i < config.undercover; i++) roles.push('undercover');
-    for (let i = 0; i < config.mrWhite; i++) roles.push('mrwhite');
-    
-    // Shuffle roles
-    for (let i = roles.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [roles[i], roles[j]] = [roles[j], roles[i]];
-    }
-
-    const players: Player[] = Array.from({ length: config.totalPlayers }, (_, index) => ({
-      id: index + 1,
-      name: '',
-      role: roles[index],
-      word: roles[index] === 'civilian' ? selectedWords.civilian : 
-            roles[index] === 'undercover' ? selectedWords.undercover : '',
-      hasRevealed: false,
-      cardIndex: -1,
-      isEliminated: false
-    }));
-
-    let playerOrder = generatePlayerOrder(config.totalPlayers);
-    
-    // Ensure Mr. White is not first in the order
-    const mrWhitePlayer = players.find(p => p.role === 'mrwhite');
-    if (mrWhitePlayer) {
-      const mrWhiteOrderIndex = playerOrder.findIndex(playerId => playerId === mrWhitePlayer.id);
-      if (mrWhiteOrderIndex === 0) {
-        // Move Mr. White to a random position that's not first
-        const newPosition = Math.floor(Math.random() * (playerOrder.length - 1)) + 1;
-        playerOrder.splice(mrWhiteOrderIndex, 1);
-        playerOrder.splice(newPosition, 0, mrWhitePlayer.id);
-      }
-    }
+    const newPlayers = GameLogic.generatePlayers(
+      config.totalPlayers,
+      config.undercover,
+      config.mrWhite,
+      selectedWords
+    );
 
     setGameState({
       phase: 'card-selection',
+      undercoverCount: config.undercover,
+      mrWhiteCount: config.mrWhite,
       currentPlayerIndex: 0,
       selectedCard: null,
-      players,
+      players: newPlayers,
       round: 1,
       gameWords: selectedWords,
-      playerOrder,
+      playerOrder: [],
       selectedPlayerToEliminate: null,
       eliminatedPlayer: null,
       winner: null,
@@ -144,6 +118,8 @@ export const useGameState = () => {
     
     setGameState({
       phase: 'setup',
+      undercoverCount: 0,
+      mrWhiteCount: 0,
       currentPlayerIndex: 0,
       selectedCard: null,
       players: [],
