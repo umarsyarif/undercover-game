@@ -792,7 +792,7 @@ A `wrangler.toml` containing only `compatibility_flags` is **silently ignored** 
 - Create: `wrangler.toml`, `.dev.vars`, `public/_headers`
 - Modify: `.gitignore`, `package.json`
 
-- [ ] **Step 1: Create the Pages config**
+- [x] **Step 1: Create the Pages config**
 
 Create `wrangler.toml`:
 
@@ -802,7 +802,7 @@ pages_build_output_dir = "./dist"
 compatibility_date = "2026-08-02"
 ```
 
-- [ ] **Step 2: Create the local secret file**
+- [x] **Step 2: Create the local secret file**
 
 Create `.dev.vars`. All three are read by the function; none are exposed to the browser.
 
@@ -812,7 +812,7 @@ AI_API_KEY=put-your-9router-key-here
 AI_MODEL=put-the-model-name-here
 ```
 
-- [ ] **Step 3: Gitignore it**
+- [x] **Step 3: Gitignore it**
 
 Append to `.gitignore`:
 
@@ -822,7 +822,7 @@ Append to `.gitignore`:
 .wrangler
 ```
 
-- [ ] **Step 4: Add security headers**
+- [x] **Step 4: Add security headers**
 
 Cloudflare Pages sends none by default. Create `public/_headers`:
 
@@ -837,7 +837,7 @@ Cloudflare Pages sends none by default. Create `public/_headers`:
 
 `style-src 'unsafe-inline'` is required — Tailwind and Radix inject inline styles at runtime.
 
-- [ ] **Step 5: Add the dev scripts**
+- [x] **Step 5: Add the dev scripts**
 
 In `package.json`, replace the `dev` script and add one:
 
@@ -848,13 +848,13 @@ In `package.json`, replace the `dev` script and add one:
 
 Plain `vite` does not serve `/api/words`. To work on the function, run `npm run dev` in one terminal and `npm run dev:pages` in another, then open **:8788** — not :5173. HMR still works through the proxy.
 
-- [ ] **Step 6: Verify the config is valid**
+- [x] **Step 6: Verify the config is valid**
 
 Run: `npx wrangler pages dev --proxy 5173 --port 8788` (with `npm run dev` running in another terminal).
 
 Expected: wrangler starts and reports it is serving on `http://localhost:8788`. Stop it once confirmed.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add wrangler.toml public/_headers .gitignore package.json

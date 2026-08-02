@@ -26,3 +26,7 @@ dist-ssr
 
 # TypeScript incremental build cache
 *.tsbuildinfo
+
+# Cloudflare
+.dev.vars
+.wrangler
