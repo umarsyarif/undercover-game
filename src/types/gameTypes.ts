@@ -57,6 +57,18 @@ export type WordApiErrorCode =
   | 'bad_response'
   | 'server_error';
 
+/**
+ * User-facing text per error code. The client renders from this table rather
+ * than from the `message` it receives, so a malformed or unexpected response
+ * can never put arbitrary text in front of a player.
+ */
+export const WORD_API_MESSAGES: Record<WordApiErrorCode, string> = {
+  invalid_request: 'Permintaan tidak valid.',
+  upstream_error: 'Layanan AI sedang sibuk. Coba lagi sebentar lagi.',
+  bad_response: 'Layanan AI tidak mengembalikan kata yang valid.',
+  server_error: 'Terjadi kesalahan di server.',
+};
+
 export interface WordApiError {
   error: WordApiErrorCode;
   /** Safe to render directly to the player. Never derived from an exception. */

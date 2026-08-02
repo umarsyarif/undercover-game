@@ -11,6 +11,7 @@ import { WORD_PROMPT, buildInput } from './prompt';
 import {
   MAX_WORDS_PER_REQUEST,
   MAX_AVOID_ENTRIES,
+  WORD_API_MESSAGES,
   type WordApiErrorCode,
 } from '../../src/types/gameTypes';
 
@@ -64,16 +65,8 @@ const WORD_PAIRS_JSON_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-/** Fixed strings per code. Never derived from an exception. */
-const MESSAGES: Record<WordApiErrorCode, string> = {
-  invalid_request: 'Permintaan tidak valid.',
-  upstream_error: 'Layanan AI sedang sibuk. Coba lagi sebentar lagi.',
-  bad_response: 'Layanan AI tidak mengembalikan kata yang valid.',
-  server_error: 'Terjadi kesalahan di server.',
-};
-
 const fail = (code: WordApiErrorCode, status: number) =>
-  new Response(JSON.stringify({ error: code, message: MESSAGES[code] }), {
+  new Response(JSON.stringify({ error: code, message: WORD_API_MESSAGES[code] }), {
     status,
     headers: { 'content-type': 'application/json; charset=utf-8' },
   });

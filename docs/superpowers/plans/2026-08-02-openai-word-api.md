@@ -130,9 +130,21 @@ export type WordApiErrorCode =
   | 'bad_response'
   | 'server_error';
 
+/**
+ * User-facing text per error code. The client renders from this table rather
+ * than from the `message` it receives, so a malformed or unexpected response
+ * can never put arbitrary text in front of a player.
+ */
+export const WORD_API_MESSAGES: Record<WordApiErrorCode, string> = {
+  invalid_request: 'Permintaan tidak valid.',
+  upstream_error: 'Layanan AI sedang sibuk. Coba lagi sebentar lagi.',
+  bad_response: 'Layanan AI tidak mengembalikan kata yang valid.',
+  server_error: 'Terjadi kesalahan di server.',
+};
+
 export interface WordApiError {
   error: WordApiErrorCode;
-  /** Safe to render directly to the player. Never derived from an exception. */
+  /** Informational. The browser client ignores it in favour of the table above. */
   message: string;
 }
 
@@ -479,6 +491,7 @@ import { WORD_PROMPT, buildInput } from './prompt';
 import {
   MAX_WORDS_PER_REQUEST,
   MAX_AVOID_ENTRIES,
+  WORD_API_MESSAGES,
   type WordApiErrorCode,
 } from '../../src/types/gameTypes';
 
@@ -532,16 +545,8 @@ const WORD_PAIRS_JSON_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-/** Fixed strings per code. Never derived from an exception. */
-const MESSAGES: Record<WordApiErrorCode, string> = {
-  invalid_request: 'Permintaan tidak valid.',
-  upstream_error: 'Layanan AI sedang sibuk. Coba lagi sebentar lagi.',
-  bad_response: 'Layanan AI tidak mengembalikan kata yang valid.',
-  server_error: 'Terjadi kesalahan di server.',
-};
-
 const fail = (code: WordApiErrorCode, status: number) =>
-  new Response(JSON.stringify({ error: code, message: MESSAGES[code] }), {
+  new Response(JSON.stringify({ error: code, message: WORD_API_MESSAGES[code] }), {
     status,
     headers: { 'content-type': 'application/json; charset=utf-8' },
   });
@@ -1086,11 +1091,12 @@ In `src/services/wordService.ts`, replace `fetchNewWords` and `addNewWords` (lin
     }
 
     if (!response.ok) {
-      const err = body as Partial<WordApiError>;
-      throw new WordFetchError(
-        err.error ?? 'server_error',
-        err.message ?? 'Terjadi kesalahan di server.'
-      );
+      // Validate the code rather than casting it — an unexpected value would
+      // otherwise be typed as a WordApiErrorCode without being one. The
+      // message is always taken from the local table, never from the wire.
+      const parsedError = WordApiErrorSchema.safeParse(body);
+      const code = parsedError.success ? parsedError.data.error : 'server_error';
+      throw new WordFetchError(code, WORD_API_MESSAGES[code]);
     }
 
     const parsed = WordApiResponseSchema.safeParse(body);
@@ -1137,13 +1143,17 @@ Replace the import line at the top of `src/services/wordService.ts`:
 import { z } from 'zod';
 import {
   WordFetchError,
+  WORD_API_MESSAGES,
   MAX_AVOID_ENTRIES,
   type WordPair,
   type WordApiRequest,
-  type WordApiError,
 } from '../types/gameTypes';
 
 const STORAGE_KEY = 'gameWords';
+
+const WordApiErrorSchema = z.object({
+  error: z.enum(['invalid_request', 'upstream_error', 'bad_response', 'server_error']),
+});
 
 const WordApiResponseSchema = z.object({
   data: z.array(

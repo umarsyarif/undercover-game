@@ -94,6 +94,33 @@ describe('WordService', () => {
       expect(error).toMatchObject({ code: 'upstream_error' });
     });
 
+    it('ignores an unrecognised error code and any message from the wire', async () => {
+      respondWith(
+        { error: 'totally_made_up', message: '<img src=x onerror=alert(1)>' },
+        false,
+        502
+      );
+
+      const error = await WordService.fetchNewWords(1).catch(e => e);
+
+      expect(error).toBeInstanceOf(WordFetchError);
+      expect(error.code).toBe('server_error');
+      expect(error.message).toBe('Terjadi kesalahan di server.');
+    });
+
+    it('renders the local message for a valid code, not the served one', async () => {
+      respondWith(
+        { error: 'upstream_error', message: 'arbitrary text from the wire' },
+        false,
+        502
+      );
+
+      const error = await WordService.fetchNewWords(1).catch(e => e);
+
+      expect(error.code).toBe('upstream_error');
+      expect(error.message).toBe('Layanan AI sedang sibuk. Coba lagi sebentar lagi.');
+    });
+
     it('rejects a response whose items are malformed', async () => {
       respondWith({ data: [{ civilian: 'Bakso' }] });
 

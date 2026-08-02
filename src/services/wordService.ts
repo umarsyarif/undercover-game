@@ -1,13 +1,17 @@
 import { z } from 'zod';
 import {
   WordFetchError,
+  WORD_API_MESSAGES,
   MAX_AVOID_ENTRIES,
   type WordPair,
   type WordApiRequest,
-  type WordApiError,
 } from '../types/gameTypes';
 
 const STORAGE_KEY = 'gameWords';
+
+const WordApiErrorSchema = z.object({
+  error: z.enum(['invalid_request', 'upstream_error', 'bad_response', 'server_error']),
+});
 
 const WordApiResponseSchema = z.object({
   data: z.array(
@@ -130,11 +134,12 @@ export class WordService {
     }
 
     if (!response.ok) {
-      const err = body as Partial<WordApiError>;
-      throw new WordFetchError(
-        err.error ?? 'server_error',
-        err.message ?? 'Terjadi kesalahan di server.'
-      );
+      // Validate the code rather than casting it — an unexpected value would
+      // otherwise be typed as a WordApiErrorCode without being one. The
+      // message is always taken from the local table, never from the wire.
+      const parsedError = WordApiErrorSchema.safeParse(body);
+      const code = parsedError.success ? parsedError.data.error : 'server_error';
+      throw new WordFetchError(code, WORD_API_MESSAGES[code]);
     }
 
     const parsed = WordApiResponseSchema.safeParse(body);
