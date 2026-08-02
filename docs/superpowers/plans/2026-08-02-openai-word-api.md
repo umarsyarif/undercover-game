@@ -152,7 +152,7 @@ export class WordFetchError extends Error {
 
 Run: `npx tsc -b --noEmit`
 
-Expected: an error in `src/services/wordService.ts`, which still builds `{ number_of_words, existing_words }`. That is expected — Task 6 fixes it. Nothing else should error.
+Expected: an error in `src/services/wordService.ts`, which still builds `{ number_of_words, existing_words }`. That is expected — **Task 7** fixes it, and it is the one error you should still see at Task 5. Nothing else should error.
 
 - [x] **Step 3: Commit**
 
@@ -242,7 +242,7 @@ Three details that are easy to get wrong:
 - Create: `functions/api/words.ts`
 - Test: `functions/api/words.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `functions/api/words.test.ts`:
 
@@ -283,6 +283,10 @@ const reply = (content: string, finish_reason = 'stop') => ({
   choices: [{ message: { content }, finish_reason }],
 });
 
+/** Response.json() is `unknown` under the Workers types, so narrow it once here. */
+const bodyOf = async (res: Response) =>
+  (await res.json()) as { error?: string; message?: string; data?: Array<{ civilian: string; undercover: string }> };
+
 const onePair = JSON.stringify({ pairs: [{ civilian: 'Kopi', undercover: 'Teh' }] });
 
 describe('POST /api/words', () => {
@@ -297,7 +301,7 @@ describe('POST /api/words', () => {
     const res = await call({ count: 1 });
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ data: [{ civilian: 'Kopi', undercover: 'Teh' }] });
+    expect(await bodyOf(res)).toEqual({ data: [{ civilian: 'Kopi', undercover: 'Teh' }] });
   });
 
   it('uses the configured base URL, key and model', async () => {
@@ -318,14 +322,14 @@ describe('POST /api/words', () => {
     const res = await call({ count: 1 });
 
     expect(res.status).toBe(200);
-    expect((await res.json()).data).toHaveLength(1);
+    expect((await bodyOf(res)).data).toHaveLength(1);
   });
 
   it('rejects a count above the maximum', async () => {
     const res = await call({ count: 21 });
 
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toBe('invalid_request');
+    expect((await bodyOf(res)).error).toBe('invalid_request');
     expect(createMock).not.toHaveBeenCalled();
   });
 
@@ -387,7 +391,7 @@ describe('POST /api/words', () => {
 
     const res = await call({ count: 2 });
 
-    expect((await res.json()).data).toEqual([{ civilian: 'Bakso', undercover: 'Siomay' }]);
+    expect((await bodyOf(res)).data).toEqual([{ civilian: 'Bakso', undercover: 'Siomay' }]);
   });
 
   it('reports a truncated reply as bad_response', async () => {
@@ -396,7 +400,7 @@ describe('POST /api/words', () => {
     const res = await call({ count: 1 });
 
     expect(res.status).toBe(502);
-    expect((await res.json()).error).toBe('bad_response');
+    expect((await bodyOf(res)).error).toBe('bad_response');
   });
 
   it('reports unparseable content as bad_response', async () => {
@@ -404,7 +408,7 @@ describe('POST /api/words', () => {
 
     const res = await call({ count: 1 });
 
-    expect((await res.json()).error).toBe('bad_response');
+    expect((await bodyOf(res)).error).toBe('bad_response');
   });
 
   it('reports schema-valid JSON with zero usable pairs as bad_response', async () => {
@@ -412,31 +416,31 @@ describe('POST /api/words', () => {
 
     const res = await call({ count: 1 });
 
-    expect((await res.json()).error).toBe('bad_response');
+    expect((await bodyOf(res)).error).toBe('bad_response');
   });
 
   it('maps an upstream outage to upstream_error', async () => {
     const { InternalServerError } = await import('openai/core/error');
     createMock.mockRejectedValueOnce(
-      new InternalServerError(500, undefined, 'boom', undefined)
+      new InternalServerError(500, undefined, 'boom', new Headers())
     );
 
     const res = await call({ count: 1 });
 
     expect(res.status).toBe(502);
-    expect((await res.json()).error).toBe('upstream_error');
+    expect((await bodyOf(res)).error).toBe('upstream_error');
   });
 
   it('maps a 400 from upstream to server_error, not upstream_error', async () => {
     const { BadRequestError } = await import('openai/core/error');
     createMock.mockRejectedValueOnce(
-      new BadRequestError(400, undefined, 'bad schema', undefined)
+      new BadRequestError(400, undefined, 'bad schema', new Headers())
     );
 
     const res = await call({ count: 1 });
 
     expect(res.status).toBe(500);
-    expect((await res.json()).error).toBe('server_error');
+    expect((await bodyOf(res)).error).toBe('server_error');
   });
 
   it('never leaks the API key or an exception message', async () => {
@@ -451,13 +455,13 @@ describe('POST /api/words', () => {
 });
 ```
 
-- [ ] **Step 2: Run them and watch them fail**
+- [x] **Step 2: Run them and watch them fail**
 
 Run: `npx vitest run functions/api/words.test.ts`
 
 Expected: the whole file fails to collect — `Failed to resolve import "./words"`. Vitest's `include` glob does not cover `functions/` yet either; Task 5 handles that. If vitest reports "No test files found", that is the same problem.
 
-- [ ] **Step 3: Write the handler**
+- [x] **Step 3: Write the handler**
 
 Create `functions/api/words.ts`:
 
@@ -646,7 +650,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 };
 ```
 
-- [ ] **Step 4: Leave the tests failing for now**
+- [x] **Step 4: Leave the tests failing for now**
 
 They cannot run until vitest is told about `functions/`. That is the next task. Do not commit yet.
 
@@ -660,13 +664,13 @@ They cannot run until vitest is told about `functions/`. That is the next task. 
 - Create: `functions/tsconfig.json`
 - Modify: `tsconfig.app.json`, `tsconfig.json`, `vitest.config.ts`
 
-- [ ] **Step 1: Generate the Workers types**
+- [x] **Step 1: Generate the Workers types**
 
 Run: `npx wrangler types --path='./functions/types.d.ts'`
 
 Expected: `functions/types.d.ts` is created, declaring `PagesFunction` among others.
 
-- [ ] **Step 2: Add a tsconfig for the functions project**
+- [x] **Step 2: Add a tsconfig for the functions project**
 
 Create `functions/tsconfig.json`:
 
@@ -689,7 +693,7 @@ Create `functions/tsconfig.json`:
 
 `gameTypes.ts` is included explicitly because the handler imports the shared error-code type from it.
 
-- [ ] **Step 3: Keep functions out of the app project**
+- [x] **Step 3: Keep functions out of the app project**
 
 In `tsconfig.app.json`, add alongside the existing `"include"`:
 
@@ -697,7 +701,7 @@ In `tsconfig.app.json`, add alongside the existing `"include"`:
   "exclude": ["functions/**/*"]
 ```
 
-- [ ] **Step 4: Add the functions project to the build**
+- [x] **Step 4: Add the functions project to the build**
 
 In `tsconfig.json`, add `functions` to the `references` array so `tsc -b` covers it:
 
@@ -712,7 +716,7 @@ In `tsconfig.json`, add `functions` to the `references` array so `tsc -b` covers
 }
 ```
 
-- [ ] **Step 5: Let vitest see the handler tests**
+- [x] **Step 5: Let vitest see the handler tests**
 
 In `vitest.config.ts`, widen `include`:
 
@@ -731,22 +735,38 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 6: Run the handler tests**
+- [x] **Step 6: Run the handler tests**
 
 Run: `npx vitest run functions/api/words.test.ts`
 
 Expected: 17 passing (49 in total). If the sanitization test fails, check the `\p{L}` regex has the `u` flag.
 
-- [ ] **Step 7: Typecheck everything**
+- [x] **Step 7: Typecheck everything**
 
 Run: `npx tsc -b --force --noEmit`
 
-Expected: clean, including `functions/`.
+Expected: **exactly one** error, and no others:
 
-- [ ] **Step 8: Commit**
+```
+src/services/wordService.ts(85,7): error TS2353: Object literal may only specify known properties,
+and 'number_of_words' does not exist in type 'WordApiRequest'.
+```
+
+That is the old client still building the retired request shape. Task 7 rewrites it and the typecheck goes clean there. Any error in `functions/` is a real problem — stop and report.
+
+- [x] **Step 8: Commit**
+
+`wrangler types` also drops a generated `functions/tsconfig.tsbuildinfo`. Ignore it rather than committing it:
 
 ```bash
-git add functions/ tsconfig.json tsconfig.app.json vitest.config.ts
+grep -q tsbuildinfo .gitignore || printf '\n# TypeScript incremental build cache\n*.tsbuildinfo\n' >> .gitignore
+```
+
+Then stage explicit paths — `git add functions/` would sweep the buildinfo in:
+
+```bash
+git add functions/api functions/tsconfig.json functions/types.d.ts \
+        tsconfig.json tsconfig.app.json vitest.config.ts .gitignore
 git commit -m "feat: add the /api/words Pages Function
 
 Validates and sanitizes input server-side, calls OpenAI with a strict
