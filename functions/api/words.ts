@@ -99,6 +99,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     baseURL: context.env.AI_BASE_URL,
     timeout: 45_000, // SDK default is 10 minutes
     maxRetries: 1, // SDK default is 2
+    defaultHeaders: { 'User-Agent': 'undercover-game/1.0' },
   });
 
   try {
