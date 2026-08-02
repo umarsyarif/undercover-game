@@ -18,23 +18,6 @@ describe('Continue with same players', () => {
     GameLogic.resetRandomStart();
   });
 
-  it('keeps every id and name when regenerating players', () => {
-    const previous = namedPlayers();
-    const generated = GameLogic.generatePlayers(previous.length, 1, 1, {
-      civilian: 'Bakso',
-      undercover: 'Siomay',
-    });
-
-    const carried = generated.map((p, i) => ({
-      ...p,
-      id: previous[i].id,
-      name: previous[i].name,
-    }));
-
-    expect(carried.map(p => p.id)).toEqual([1, 2, 3, 4]);
-    expect(carried.map(p => p.name)).toEqual(['Ana', 'Budi', 'Citra', 'Dedi']);
-  });
-
   it('clears elimination, reveal and card state for the new round', () => {
     const generated = GameLogic.generatePlayers(4, 1, 1, {
       civilian: 'Bakso',
@@ -63,18 +46,31 @@ describe('Continue with same players', () => {
     }
   });
 
-  it('does not reuse the previous round speaking order state', () => {
+  it('resetRandomStart clears the cached start player and direction', () => {
     const players = namedPlayers().map(p => ({ ...p, isEliminated: false }));
 
-    const first = GameLogic.getDescriptionPhaseOrder(players).map(p => p.id);
-    GameLogic.resetRandomStart();
-    const second = GameLogic.getDescriptionPhaseOrder(players).map(p => p.id);
+    const withRandom = (values: number[]) => {
+      const original = Math.random;
+      let i = 0;
+      Math.random = () => values[Math.min(i++, values.length - 1)];
+      try {
+        GameLogic.resetRandomStart();
+        return GameLogic.getDescriptionPhaseOrder(players).map(p => p.id);
+      } finally {
+        Math.random = original;
+      }
+    };
 
-    // Both are valid permutations of the same players; the point is that
-    // resetRandomStart() lets a fresh order be picked rather than reusing one.
-    expect([...first].sort()).toEqual([1, 2, 3, 4]);
-    expect([...second].sort()).toEqual([1, 2, 3, 4]);
-    expect(first).toHaveLength(4);
+    // First value picks the start player, second picks the direction.
+    const forwardFromFirst = withRandom([0, 0]);
+    const backwardFromLast = withRandom([0.99, 0.99]);
+
+    expect(forwardFromFirst).not.toEqual(backwardFromLast);
+
+    // Without a reset the cached choice is reused, so the order is stable.
+    const stableA = GameLogic.getDescriptionPhaseOrder(players).map(p => p.id);
+    const stableB = GameLogic.getDescriptionPhaseOrder(players).map(p => p.id);
+    expect(stableA).toEqual(stableB);
   });
 
   it('never starts the speaking order with Mr. White', () => {

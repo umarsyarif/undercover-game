@@ -441,11 +441,11 @@ Two tests in `src/test/continue-with-same-players.test.ts` do not test productio
 **Files:**
 - Modify: `src/test/continue-with-same-players.test.ts`
 
-- [ ] **Step 1: Delete the tautological test**
+- [x] **Step 1: Delete the tautological test**
 
 Remove the whole `it('keeps every id and name when regenerating players', ...)` block. Task 1 Step 1 added a test that covers the same contract meaningfully.
 
-- [ ] **Step 2: Make the reset test prove something**
+- [x] **Step 2: Make the reset test prove something**
 
 Replace the `it('does not reuse the previous round speaking order state', ...)` block with one that controls randomness, so it can assert the cached start and direction actually change:
 
@@ -478,13 +478,13 @@ Replace the `it('does not reuse the previous round speaking order state', ...)` 
   });
 ```
 
-- [ ] **Step 3: Run the file**
+- [x] **Step 3: Run the file**
 
 Run: `npx vitest run src/test/continue-with-same-players.test.ts`
 
 Expected: all passing. If `forwardFromFirst` equals `backwardFromLast`, the Mr. White swap from Task 2 collapsed both orders onto the same result — change the roster in `namedPlayers()` so Mr. White is not adjacent to the start in either direction, rather than weakening the assertion.
 
-- [ ] **Step 4: Run everything and commit**
+- [x] **Step 4: Run everything and commit**
 
 Run: `npx vitest run`
 
