@@ -102,7 +102,7 @@ Both the function and the client import these, so there is one definition and no
 **Files:**
 - Modify: `src/types/gameTypes.ts:37-50`
 
-- [ ] **Step 1: Replace the old API types**
+- [x] **Step 1: Replace the old API types**
 
 In `src/types/gameTypes.ts`, replace the existing `WordApiRequest` and `WordApiResponse` interfaces:
 
@@ -148,13 +148,13 @@ export class WordFetchError extends Error {
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc -b --noEmit`
 
 Expected: an error in `src/services/wordService.ts`, which still builds `{ number_of_words, existing_words }`. That is expected — Task 6 fixes it. Nothing else should error.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/types/gameTypes.ts

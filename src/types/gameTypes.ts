@@ -34,19 +34,44 @@ export interface WordPair {
   played: boolean;
 }
 
+/** Maximum pairs a single /api/words call may request. */
+export const MAX_WORDS_PER_REQUEST = 20;
+
+/** Maximum `avoid` entries the function will accept. */
+export const MAX_AVOID_ENTRIES = 60;
+
 export interface WordApiRequest {
-  number_of_words: number;
-  existing_words: Array<{
-    civilian: string;
-    undercover: string;
-  }>;
+  /** How many pairs to generate. 1..MAX_WORDS_PER_REQUEST. */
+  count: number;
+  /** Words already in the player's pool — both halves of recent pairs. */
+  avoid?: string[];
 }
 
 export interface WordApiResponse {
-  data: Array<{
-    civilian: string;
-    undercover: string;
-  }>;
+  data: Array<{ civilian: string; undercover: string }>;
+}
+
+export type WordApiErrorCode =
+  | 'invalid_request'
+  | 'upstream_error'
+  | 'bad_response'
+  | 'server_error';
+
+export interface WordApiError {
+  error: WordApiErrorCode;
+  /** Safe to render directly to the player. Never derived from an exception. */
+  message: string;
+}
+
+/** Thrown by WordService when /api/words returns a non-2xx response. */
+export class WordFetchError extends Error {
+  constructor(
+    public readonly code: WordApiErrorCode,
+    message: string
+  ) {
+    super(message);
+    this.name = 'WordFetchError';
+  }
 }
 
 export interface PlayerConfig {
