@@ -784,7 +784,7 @@ The increment fires on **re-entry to `description`** (which Task 5 implemented),
 - Modify: `src/App.tsx:318`
 - Modify: `src/hooks/useGamePhases.ts` (remove `continueToNextRound`)
 
-- [ ] **Step 1: Give VotingPhase a round prop**
+- [x] **Step 1: Give VotingPhase a round prop**
 
 In `src/components/VotingPhase.tsx`, add `round` to the props interface:
 
@@ -824,7 +824,7 @@ and use it in the status bar, replacing `round={1}`:
       />
 ```
 
-- [ ] **Step 2: Pass it from App**
+- [x] **Step 2: Pass it from App**
 
 In `src/App.tsx`, in the voting-phase branch, add the prop:
 
@@ -840,23 +840,23 @@ In `src/App.tsx`, in the voting-phase branch, add the prop:
         />
 ```
 
-- [ ] **Step 3: Delete the dead helper**
+- [x] **Step 3: Delete the dead helper**
 
 In `src/hooks/useGamePhases.ts`, delete the `continueToNextRound` function (the block starting `// Continue to next round`) and remove `continueToNextRound` from the returned object.
 
-- [ ] **Step 4: Typecheck**
+- [x] **Step 4: Typecheck**
 
 Run: `npx tsc -b --noEmit`
 
 Expected: clean.
 
-- [ ] **Step 5: Verify the counter advances**
+- [x] **Step 5: Verify the counter advances**
 
 Run: `npm run dev`. Start a 5-player game with 1 undercover.
 
 Expected: description and voting both show "Round 1". After eliminating a civilian, the next description **and** its voting screen both show "Round 2".
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/VotingPhase.tsx src/App.tsx src/hooks/useGamePhases.ts

@@ -329,6 +329,7 @@ function AppWithServices() {
         <VotingPhase
           sortedPlayers={sortedPlayers}
           selectedPlayerToEliminate={gameState.selectedPlayerToEliminate}
+          round={gameState.round}
           onBack={() => transitionToPhase('description')}
           onPlayerSelect={handlePlayerSelect}
           onEliminatePlayer={handleEliminatePlayer}

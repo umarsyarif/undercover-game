@@ -194,16 +194,6 @@ export const useGamePhases = (
     updateGameState({ phase: 'description' });
   };
 
-  // Continue to next round
-  const continueToNextRound = () => {
-    updateGameState({
-      phase: 'description',
-      round: gameState.round + 1,
-      selectedPlayerToEliminate: null,
-      eliminatedPlayer: null
-    });
-  };
-
   return {
     handleCardSelect,
     handleNameSubmit,
@@ -215,7 +205,6 @@ export const useGamePhases = (
     handleEliminationConfirm,
     handleMrWhiteGuess,
     goToPhase,
-    handleBackToDescription,
-    continueToNextRound
+    handleBackToDescription
   };
 };

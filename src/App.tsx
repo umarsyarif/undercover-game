@@ -318,6 +318,7 @@ function App() {
         <VotingPhase
           sortedPlayers={sortedPlayers}
           selectedPlayerToEliminate={gameState.selectedPlayerToEliminate}
+          round={gameState.round}
           onBack={() => updateGameState({ phase: 'description' })}
           onPlayerSelect={gamePhases.handlePlayerSelect}
           onEliminatePlayer={gamePhases.handleEliminatePlayer}

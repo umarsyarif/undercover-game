@@ -224,6 +224,7 @@ export const GameUI: React.FC<GameUIProps> = ({
         <VotingPhase
           sortedPlayers={sortedPlayersForVoting}
           selectedPlayerToEliminate={gameState.selectedPlayerToEliminate}
+          round={gameState.round}
           onBack={() => onPhaseTransition('description')}
           onPlayerSelect={onPlayerSelect}
           onEliminatePlayer={onEliminatePlayer}

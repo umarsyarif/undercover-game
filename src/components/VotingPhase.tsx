@@ -8,6 +8,7 @@ import type { Player } from '../types/gameTypes';
 interface VotingPhaseProps {
   sortedPlayers: Player[];
   selectedPlayerToEliminate: number | null;
+  round: number;
   onBack: () => void;
   onPlayerSelect: (playerId: number) => void;
   onEliminatePlayer: () => void;
@@ -17,6 +18,7 @@ interface VotingPhaseProps {
 export const VotingPhase: React.FC<VotingPhaseProps> = ({
   sortedPlayers,
   selectedPlayerToEliminate,
+  round,
   onBack,
   onPlayerSelect,
   onEliminatePlayer,
@@ -35,7 +37,7 @@ export const VotingPhase: React.FC<VotingPhaseProps> = ({
 
       <GameStatus
         remainingCounts={remainingCounts}
-        round={1}
+        round={round}
         variant="elimination"
       />
 
