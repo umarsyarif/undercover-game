@@ -487,7 +487,7 @@ voting screen."
 - Delete: `src/test/continue-with-same-players.test.ts`
 - Create: `src/test/continue-with-same-players.test.ts` (rewritten)
 
-- [ ] **Step 1: Replace the file wholesale**
+- [x] **Step 1: Replace the file wholesale**
 
 Overwrite `src/test/continue-with-same-players.test.ts`:
 
@@ -583,19 +583,19 @@ describe('Continue with same players', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx vitest run src/test/continue-with-same-players.test.ts`
 
 Expected: 5 passing, and no import of `GameActionService` anywhere in the file.
 
-- [ ] **Step 3: Run the full suite**
+- [x] **Step 3: Run the full suite**
 
 Run: `npx vitest run`
 
 Expected: 41 passing.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/test/continue-with-same-players.test.ts
