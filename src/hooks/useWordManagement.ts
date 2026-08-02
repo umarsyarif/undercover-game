@@ -76,22 +76,12 @@ export const useWordManagement = () => {
     return !WordService.areAllWordsPlayed();
   };
 
-  // Handle words updated callback
-  const handleWordsUpdated = (
-    initializeGame: (config: any) => { success: boolean; reason?: string },
-    playerConfig: any
-  ) => {
-    // Restart the game initialization process
-    return initializeGame(playerConfig);
-  };
-
   return {
     isRefreshing,
     setIsRefreshing,
     getAvailableWordCount,
     getRandomWordPair,
     handleRefreshWords,
-    checkWordsAvailable,
-    handleWordsUpdated
+    checkWordsAvailable
   };
 };

@@ -73,28 +73,12 @@ function App() {
     );
   };
 
-  // Words updated handler
+  // Words updated handler. Names are preserved by initializeGame itself when a
+  // game is already in progress.
   const handleWordsUpdated = () => {
     const config = playerManagement.getPlayerConfig();
-    const result = wordManagement.handleWordsUpdated(initializeGame, config);
-
-    // initializeGame regenerates players from scratch. If names were already
-    // entered this session, carry them over rather than blanking them.
-    const previousNames = gameState.players
-      .filter(p => p.name.trim() !== '')
-      .map(p => ({ id: p.id, name: p.name }));
-
-    if (result.success && previousNames.length > 0) {
-      updateGameState({
-        needsNameEntry: false,
-        players: gameState.players.map(player => ({
-          ...player,
-          name: previousNames.find(n => n.id === player.id)?.name ?? player.name
-        }))
-      });
-    }
-
-    return result;
+    const gameInProgress = gameState.players.some(p => p.name.trim() !== '');
+    return initializeGame(config, gameInProgress);
   };
 
   // Name submission handler
@@ -156,7 +140,6 @@ function App() {
       selectedCard: null,
       players: resetPlayers,
       round: 1,
-      needsNameEntry: false,
       gameWords: newWordPair,
       selectedPlayerToEliminate: null,
       eliminatedPlayer: null,

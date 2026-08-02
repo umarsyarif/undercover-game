@@ -19,8 +19,6 @@ export interface GameState {
   selectedCard: number | null;
   players: Player[];
   round: number;
-  /** True while players still need to type their names (first game only). */
-  needsNameEntry: boolean;
   gameWords: { civilian: string; undercover: string };
   playerOrder: number[];
   selectedPlayerToEliminate: number | null;

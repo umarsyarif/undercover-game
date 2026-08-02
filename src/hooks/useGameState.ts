@@ -19,7 +19,6 @@ export const useGameState = () => {
     selectedCard: null,
     players: [],
     round: 1,
-    needsNameEntry: true,
     gameWords: { civilian: '', undercover: '' },
     playerOrder: [],
     selectedPlayerToEliminate: null,
@@ -70,12 +69,12 @@ export const useGameState = () => {
     };
   };
 
-  // Initialize game
-  const initializeGame = (config: GameConfig) => {
-    // Reset the random start player
+  // Initialize game. When preserveNames is true, names from the current
+  // players are carried onto the freshly generated ones by id — nothing else
+  // from the old state survives.
+  const initializeGame = (config: GameConfig, preserveNames = false) => {
     GameLogic.resetRandomStart();
-    
-    // Check if words are available
+
     if (WordService.areAllWordsPlayed()) {
       return { success: false, reason: 'no-words' };
     }
@@ -92,22 +91,30 @@ export const useGameState = () => {
       selectedWords
     );
 
-    setGameState({
-      phase: 'card-selection',
-      undercoverCount: config.undercover,
-      mrWhiteCount: config.mrWhite,
-      currentPlayerIndex: 0,
-      selectedCard: null,
-      players: newPlayers,
-      round: 1,
-      needsNameEntry: true,
-      gameWords: selectedWords,
-      playerOrder: [],
-      selectedPlayerToEliminate: null,
-      eliminatedPlayer: null,
-      winner: null,
-      mrWhiteGuess: '',
-      showingWord: false
+    setGameState(prev => {
+      const players = preserveNames
+        ? newPlayers.map(p => ({
+            ...p,
+            name: prev.players.find(o => o.id === p.id)?.name ?? ''
+          }))
+        : newPlayers;
+
+      return {
+        phase: 'card-selection',
+        undercoverCount: config.undercover,
+        mrWhiteCount: config.mrWhite,
+        currentPlayerIndex: 0,
+        selectedCard: null,
+        players,
+        round: 1,
+        gameWords: selectedWords,
+        playerOrder: [],
+        selectedPlayerToEliminate: null,
+        eliminatedPlayer: null,
+        winner: null,
+        mrWhiteGuess: '',
+        showingWord: false
+      };
     });
 
     return { success: true };
@@ -126,7 +133,6 @@ export const useGameState = () => {
       selectedCard: null,
       players: [],
       round: 1,
-      needsNameEntry: true,
       gameWords: { civilian: '', undercover: '' },
       playerOrder: [],
       selectedPlayerToEliminate: null,

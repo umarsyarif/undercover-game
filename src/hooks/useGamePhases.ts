@@ -11,12 +11,15 @@ export const useGamePhases = (
   closeModal: (modalName: ModalName) => void
 ) => {
 
+  const currentPlayerNeedsName = () =>
+    !gameState.players[gameState.currentPlayerIndex]?.name.trim();
+
   // Handle card selection
   const handleCardSelect = (cardIndex: number) => {
     const isCardTaken = gameState.players.some(p => p.cardIndex === cardIndex);
     if (isCardTaken) return;
 
-    if (gameState.needsNameEntry) {
+    if (currentPlayerNeedsName()) {
       updateGameState({ selectedCard: cardIndex });
       openModal('showNameModal');
       return;
@@ -71,7 +74,7 @@ export const useGamePhases = (
           players: updatedPlayers
         });
 
-        if (!gameState.needsNameEntry) {
+        if (!currentPlayerNeedsName()) {
           openModal('showTurnModal');
         }
       } else {

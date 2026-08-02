@@ -86,4 +86,34 @@ describe('Continue with same players', () => {
       expect(order[0].role).not.toBe('mrwhite');
     }
   });
+
+  describe('refreshing words mid-setup', () => {
+    it('carries names onto freshly generated players without restoring old roles', () => {
+      const previous: Player[] = [
+        { id: 1, name: 'Ana',  role: 'undercover', word: 'Teh',  cardIndex: 2, hasRevealed: true, isEliminated: true },
+        { id: 2, name: 'Budi', role: 'civilian',   word: 'Kopi', cardIndex: 0, hasRevealed: true, isEliminated: false },
+        { id: 3, name: 'Citra', role: 'mrwhite',   word: '',     cardIndex: 1, hasRevealed: true, isEliminated: false },
+      ];
+
+      const fresh = GameLogic.generatePlayers(3, 1, 0, {
+        civilian: 'Bakso',
+        undercover: 'Siomay',
+      });
+
+      const carried = fresh.map(p => ({
+        ...p,
+        name: previous.find(o => o.id === p.id)?.name ?? '',
+      }));
+
+      // Names survive...
+      expect(carried.map(p => p.name)).toEqual(['Ana', 'Budi', 'Citra']);
+
+      // ...and nothing else does.
+      expect(carried.every(p => p.isEliminated === false)).toBe(true);
+      expect(carried.every(p => p.hasRevealed === false)).toBe(true);
+      expect(carried.every(p => p.cardIndex === -1)).toBe(true);
+      expect(carried.filter(p => p.role === 'mrwhite')).toHaveLength(0);
+      expect(carried.every(p => p.word !== 'Kopi' && p.word !== 'Teh')).toBe(true);
+    });
+  });
 });
