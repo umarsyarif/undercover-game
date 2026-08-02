@@ -115,58 +115,11 @@ static getVotingPhaseOrder(players: Player[]): Player[] {
 }
 ```
 
-#### GameStateManager Class (`src/services/gameStateManager.ts`)
-```typescript
-getDescriptionPhaseOrder(): Player[] {
-  return GameLogic.getDescriptionPhaseOrder(this.state.players);
-}
-
-getVotingPhaseOrder(): Player[] {
-  return GameLogic.getVotingPhaseOrder(this.state.players);
-}
-```
-
-#### useGameService Hook (`src/hooks/useGameService.ts`)
-```typescript
-const getDescriptionPhaseOrder = useCallback((): Player[] => {
-  return gameManagerRef.current?.getDescriptionPhaseOrder() || [];
-}, [gameState.players]);
-
-const getVotingPhaseOrder = useCallback((): Player[] => {
-  return gameManagerRef.current?.getVotingPhaseOrder() || [];
-}, [gameState.players]);
-```
-
-#### GameHelpers (`src/utils/gameHelpers.ts`)
-```typescript
-/**
- * Get ordered players for description phase (based on card selection order)
- */
-getDescriptionPhaseOrder: (players: Player[]): Player[] => {
-  return GameLogic.getDescriptionPhaseOrder(players);
-},
-
-/**
- * Get ordered players for voting phase (same as description order, but eliminated players at the end)
- */
-getVotingPhaseOrder: (players: Player[]): Player[] => {
-  return GameLogic.getVotingPhaseOrder(players);
-},
-```
-
 ### Updated Components
 
 #### App.tsx
 - Description phase now uses `getDescriptionPhaseOrder()` instead of `getOrderedPlayers()`
 - Voting phase now uses `getVotingPhaseOrder()` instead of manual filtering
-
-#### AppWithServices.tsx
-- Added new methods to destructuring from `useGameService`
-- Updated description and voting phases to use new ordering methods
-
-#### GameContainer.tsx
-- Added `descriptionPhaseOrder` and `votingPhaseOrder` to computed values
-- Updated `sortedPlayersForVoting` to use `getVotingPhaseOrder()`
 
 ## How It Works
 

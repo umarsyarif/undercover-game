@@ -1019,7 +1019,7 @@ git commit -m "fix: keep entered names when reusing existing words"
 - Delete: 12 source files, 2 docs
 - Modify: `docs/CARD_ORDERING_IMPLEMENTATION.md`
 
-- [ ] **Step 1: Delete the source files**
+- [x] **Step 1: Delete the source files**
 
 ```bash
 git rm src/AppWithServices.tsx \
@@ -1036,13 +1036,13 @@ git rm src/AppWithServices.tsx \
        src/types/containerTypes.ts
 ```
 
-- [ ] **Step 2: Delete the docs that describe the dead layer as current**
+- [x] **Step 2: Delete the docs that describe the dead layer as current**
 
 ```bash
 git rm docs/SERVICE_LAYER_GUIDE.md docs/ARCHITECTURE_IMPROVEMENTS.md src/services/README.md
 ```
 
-- [ ] **Step 3: Trim the stale half of the ordering doc**
+- [x] **Step 3: Trim the stale half of the ordering doc**
 
 `docs/CARD_ORDERING_IMPLEMENTATION.md` is accurate about the live `GameLogic.getDescriptionPhaseOrder` and `getVotingPhaseOrder` methods but stale about the deleted files. Delete these subsections from it:
 
@@ -1054,7 +1054,7 @@ git rm docs/SERVICE_LAYER_GUIDE.md docs/ARCHITECTURE_IMPROVEMENTS.md src/service
 
 Keep everything about `GameLogic` and `App.tsx`.
 
-- [ ] **Step 4: Confirm nothing references the deleted files**
+- [x] **Step 4: Confirm nothing references the deleted files**
 
 Run:
 
@@ -1064,19 +1064,19 @@ grep -rn "gameService\|gameStateManager\|gameActionService\|useGameService\|game
 
 Expected: no output. A hit in `src/components/GameUI.tsx` means that file was missed — it is on the deletion list.
 
-- [ ] **Step 5: Typecheck, test, build**
+- [x] **Step 5: Typecheck, test, build**
 
 Run: `npx tsc -b --force --noEmit && npx vitest run && npm run build`
 
 Expected: clean typecheck, 41 tests passing, successful build.
 
-- [ ] **Step 6: Confirm the app still runs**
+- [x] **Step 6: Confirm the app still runs**
 
 Run: `npm run dev` and play one complete 3-player game start to finish.
 
 Expected: no console errors, no blank screens.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A
