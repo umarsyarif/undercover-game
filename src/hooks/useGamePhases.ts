@@ -128,16 +128,24 @@ export const useGamePhases = (
     closeModal('showEliminationModal');
 
     if (gameState.eliminatedPlayer?.role === 'mrwhite') {
-      // Mr. White gets a chance to guess
+      // Mr. White gets one chance to guess the civilian word.
       updateGameState({ phase: 'mr-white-guess' });
-      // Don't open modal - use the main interface instead
-    } else {
-      // Check win conditions
-      const winner = checkWinConditions();
-      if (winner) {
-        openModal('showGameOverModal');
-      }
+      return;
     }
+
+    const winner = checkWinConditions();
+    if (winner) {
+      openModal('showGameOverModal');
+      return;
+    }
+
+    // No winner yet: start the next round of descriptions.
+    updateGameState({
+      phase: 'description',
+      round: gameState.round + 1,
+      eliminatedPlayer: null,
+      selectedPlayerToEliminate: null
+    });
   };
 
   // Handle Mr. White guess
@@ -145,26 +153,35 @@ export const useGamePhases = (
     const isCorrect =
       gameState.mrWhiteGuess.toLowerCase().trim() ===
       gameState.gameWords.civilian.toLowerCase().trim();
-    
     if (isCorrect) {
-      // Mr. White wins
-      updateGameState({
-        winner: 'mrwhite',
-        phase: 'game-over'
-      });
+      updateGameState({ winner: 'mrwhite', phase: 'game-over' });
       openModal('showGameOverModal');
-    } else {
-      // Mr. White's guess is wrong, continue the game
-      // Clear the guess and continue with the next phase
-      updateGameState({
-        mrWhiteGuess: '',
-        phase: 'voting'
-      });
-      
-      // Check if there are other win conditions
-      checkWinConditions();
+      return;
     }
-  }, [gameState.mrWhiteGuess, gameState.gameWords.civilian, updateGameState, openModal, checkWinConditions]);
+
+    // Wrong guess. Mr. White is already eliminated, so the remaining players
+    // may already satisfy a win condition — check before starting a new round.
+    const winner = checkWinConditions();
+    if (winner) {
+      openModal('showGameOverModal');
+      return;
+    }
+
+    updateGameState({
+      mrWhiteGuess: '',
+      phase: 'description',
+      round: gameState.round + 1,
+      eliminatedPlayer: null,
+      selectedPlayerToEliminate: null
+    });
+  }, [
+    gameState.mrWhiteGuess,
+    gameState.gameWords.civilian,
+    gameState.round,
+    updateGameState,
+    openModal,
+    checkWinConditions
+  ]);
 
   // Handle phase transitions
   const goToPhase = (phase: GameState['phase']) => {

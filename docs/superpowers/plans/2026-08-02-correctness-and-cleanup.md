@@ -381,7 +381,7 @@ Two defects on the elimination path:
 - Modify: `src/hooks/useGamePhases.ts:126-141` (`handleEliminationConfirm`)
 - Modify: `src/hooks/useGamePhases.ts:143-170` (`handleMrWhiteGuess`)
 
-- [ ] **Step 1: Route both elimination outcomes**
+- [x] **Step 1: Route both elimination outcomes**
 
 In `src/hooks/useGamePhases.ts`, replace `handleEliminationConfirm`:
 
@@ -412,7 +412,7 @@ In `src/hooks/useGamePhases.ts`, replace `handleEliminationConfirm`:
   };
 ```
 
-- [ ] **Step 2: Fix the guess handler**
+- [x] **Step 2: Fix the guess handler**
 
 Replace `handleMrWhiteGuess` (the version left after Task 2 removed its logs):
 
@@ -454,19 +454,19 @@ Replace `handleMrWhiteGuess` (the version left after Task 2 removed its logs):
   ]);
 ```
 
-- [ ] **Step 3: Typecheck**
+- [x] **Step 3: Typecheck**
 
 Run: `npx tsc -b --noEmit`
 
 Expected: clean.
 
-- [ ] **Step 4: Play the scenario by hand**
+- [x] **Step 4: Play the scenario by hand**
 
 Run: `npm run dev`, then in the browser: 4 players, 1 undercover, 1 Mr. White. Vote out a civilian in round 1, then Mr. White in round 2, and enter a deliberately wrong guess.
 
 Expected: the game ends immediately and declares the undercover the winner. It must **not** show another description round.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/hooks/useGamePhases.ts
