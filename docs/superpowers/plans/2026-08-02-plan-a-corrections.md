@@ -176,13 +176,123 @@ In `handleCardSelect`, replace `if (gameState.needsNameEntry) {` with:
     if (currentPlayerNeedsName()) {
 ```
 
-In `handleWordRevealNext`, replace `if (!gameState.needsNameEntry) {` with:
+In `handleWordRevealNext`, the index has **not** advanced yet when the turn-modal decision is made — `updateGameState` is queued, and the closure still holds the old `currentPlayerIndex`. Using `currentPlayerNeedsName()` there would test the player who just finished, not the one being announced. Compute the next index explicitly and read from `updatedPlayers`. Replace the whole `setTimeout` body:
 
 ```ts
-        if (!currentPlayerNeedsName()) {
+    setTimeout(() => {
+      const nextIndex = gameState.currentPlayerIndex + 1;
+
+      if (nextIndex < totalPlayers) {
+        updateGameState({
+          currentPlayerIndex: nextIndex,
+          selectedCard: null,
+          players: updatedPlayers
+        });
+
+        // The turn modal announces a player by name. An unnamed next player
+        // goes straight to the name prompt from handleCardSelect, so
+        // announcing them first would be a spurious extra step.
+        if (updatedPlayers[nextIndex]?.name.trim()) {
+          openModal('showTurnModal');
+        }
+      } else {
+        updateGameState({
+          phase: 'description',
+          currentPlayerIndex: 0,
+          players: updatedPlayers
+        });
+      }
+    }, 200);
 ```
 
+`currentPlayerNeedsName()` stays as-is in `handleCardSelect`, where the current index is the right one to read.
+
 Then remove the field entirely: delete the `needsNameEntry` line from `GameState` in `src/types/gameTypes.ts`, delete every `needsNameEntry:` line from the state literals in `src/hooks/useGameState.ts`, and delete `needsNameEntry: false,` from `handleContinueWithSamePlayers` in `src/App.tsx` (keep `round: 1`).
+
+- [x] **Step 5b: Pin the turn-modal decision with a regression test**
+
+The off-by-one above is invisible in the all-named and all-unnamed cases, which is why it survived review. Only a mixed roster catches it. Create `src/test/turn-modal.test.ts`:
+
+```ts
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook } from '@testing-library/react';
+import { useGamePhases } from '../hooks/useGamePhases';
+import type { GameState, Player } from '../types/gameTypes';
+
+const player = (id: number, name: string): Player => ({
+  id,
+  name,
+  role: 'civilian',
+  word: 'Kopi',
+  cardIndex: -1,
+  hasRevealed: false,
+  isEliminated: false,
+});
+
+const stateWith = (players: Player[], currentPlayerIndex: number): GameState => ({
+  phase: 'card-selection',
+  undercoverCount: 1,
+  mrWhiteCount: 0,
+  currentPlayerIndex,
+  selectedCard: 0,
+  players,
+  round: 1,
+  gameWords: { civilian: 'Kopi', undercover: 'Teh' },
+  playerOrder: [],
+  selectedPlayerToEliminate: null,
+  eliminatedPlayer: null,
+  winner: null,
+  mrWhiteGuess: '',
+  showingWord: false,
+});
+
+describe('turn modal announces the NEXT player', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  const revealAndAdvance = (players: Player[], currentPlayerIndex: number) => {
+    const openModal = vi.fn();
+    const { result } = renderHook(() =>
+      useGamePhases(
+        stateWith(players, currentPlayerIndex),
+        vi.fn(),
+        vi.fn(),
+        openModal,
+        vi.fn()
+      )
+    );
+
+    result.current.handleWordRevealNext(players.length);
+    vi.runAllTimers();
+
+    return openModal;
+  };
+
+  it('stays silent when the next player has no name yet', () => {
+    // The regression: player 1 is named, so a predicate reading the CURRENT
+    // player would wrongly announce unnamed player 2.
+    const openModal = revealAndAdvance([player(1, 'Ana'), player(2, '')], 0);
+
+    expect(openModal).not.toHaveBeenCalledWith('showTurnModal');
+  });
+
+  it('announces the next player when they already have a name', () => {
+    const openModal = revealAndAdvance([player(1, 'Ana'), player(2, 'Budi')], 0);
+
+    expect(openModal).toHaveBeenCalledWith('showTurnModal');
+  });
+
+  it('announces nobody after the last player reveals', () => {
+    const openModal = revealAndAdvance([player(1, 'Ana'), player(2, 'Budi')], 1);
+
+    expect(openModal).not.toHaveBeenCalledWith('showTurnModal');
+  });
+});
+```
+
+Run: `npx vitest run src/test/turn-modal.test.ts`
+
+Expected: 3 passing. Revert the `setTimeout` body to the buggy `currentPlayerNeedsName()` form and confirm the first test **fails** — a regression test that cannot fail is not one.
 
 - [x] **Step 6: Typecheck**
 
@@ -207,10 +317,10 @@ Expected: player 1's name is still shown on their card, no card is pre-claimed, 
 
 Run: `npx vitest run`
 
-Expected: 32 passing.
+Expected: 35 passing.
 
 ```bash
-git add src/hooks/useGameState.ts src/App.tsx src/hooks/useGamePhases.ts src/types/gameTypes.ts src/test/continue-with-same-players.test.ts
+git add src/hooks/useGameState.ts src/test/turn-modal.test.ts src/App.tsx src/hooks/useGamePhases.ts src/types/gameTypes.ts src/test/continue-with-same-players.test.ts
 git commit -m "fix: carry only names when refreshing words mid-setup
 
 handleWordsUpdated restored the previous player objects wholesale over the
@@ -308,7 +418,7 @@ Expected: all passing, including the 13 pre-existing tests. Those encode the exi
 
 Run: `npx vitest run && npx tsc -b --force --noEmit`
 
-Expected: 33 passing, clean typecheck.
+Expected: 36 passing, clean typecheck.
 
 ```bash
 git add src/services/gameLogic.ts src/test/ordering.test.ts
@@ -378,7 +488,7 @@ Expected: all passing. If `forwardFromFirst` equals `backwardFromLast`, the Mr. 
 
 Run: `npx vitest run`
 
-Expected: 32 passing (one test removed, one rewritten).
+Expected: 35 passing (one test removed, one rewritten).
 
 ```bash
 git add src/test/continue-with-same-players.test.ts
@@ -457,7 +567,7 @@ Expected: each ends immediately on the correct screen with the correct winner. O
 
 Run: `npx vitest run && npx tsc -b --force --noEmit && npm run build`
 
-Expected: 29 passing (32 minus the 3 deleted), clean typecheck, successful build.
+Expected: 32 passing (35 minus the 3 deleted), clean typecheck, successful build.
 
 - [ ] **Step 6: Commit**
 
@@ -474,7 +584,7 @@ totals and its unstartable 4-player verification scenario."
 
 ## Done criteria
 
-- `npx vitest run` — 29 passing, 4 files
+- `npx vitest run` — 32 passing, 5 files
 - `npx tsc -b --force --noEmit` — clean
 - `npm run build` — succeeds
 - Refreshing words mid-setup keeps names and nothing else

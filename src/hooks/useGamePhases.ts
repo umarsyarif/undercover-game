@@ -67,14 +67,19 @@ export const useGamePhases = (
     // Small delay so the next player's word is not visible during the
     // modal close transition.
     setTimeout(() => {
-      if (gameState.currentPlayerIndex < totalPlayers - 1) {
+      const nextIndex = gameState.currentPlayerIndex + 1;
+
+      if (nextIndex < totalPlayers) {
         updateGameState({
-          currentPlayerIndex: gameState.currentPlayerIndex + 1,
+          currentPlayerIndex: nextIndex,
           selectedCard: null,
           players: updatedPlayers
         });
 
-        if (!currentPlayerNeedsName()) {
+        // The turn modal announces a player by name. An unnamed next player
+        // goes straight to the name prompt from handleCardSelect, so
+        // announcing them first would be a spurious extra step.
+        if (updatedPlayers[nextIndex]?.name.trim()) {
           openModal('showTurnModal');
         }
       } else {
