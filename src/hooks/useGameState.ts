@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { WordService } from '../services/wordService';
 import { GameLogic } from '../services/gameLogic';
-import type { GameState, PlayerRole, Player, WordPair } from '../types/gameTypes';
+import type { GameState, PlayerRole, WordPair } from '../types/gameTypes';
 
 interface GameConfig {
   totalPlayers: number;
