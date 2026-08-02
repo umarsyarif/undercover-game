@@ -46,7 +46,7 @@ This plan uses a hand-written JSON schema rather than that helper, so the broken
 - Modify: `package.json`
 - Regenerate: `package-lock.json`
 
-- [ ] **Step 1: Note the current state**
+- [x] **Step 1: Note the current state**
 
 Run:
 
@@ -56,7 +56,7 @@ node -p "JSON.stringify(Object.keys(require('./node_modules/zod/package.json').e
 
 Expected: `[".","./package.json","./locales/*"]` — no `./v3`, no `./v4`.
 
-- [ ] **Step 2: Install the dependencies**
+- [x] **Step 2: Install the dependencies**
 
 Run:
 
@@ -65,7 +65,7 @@ npm install zod@^3.25.76 openai@^7.3.0
 npm install --save-dev wrangler@^4
 ```
 
-- [ ] **Step 3: Verify the subpath now resolves**
+- [x] **Step 3: Verify the subpath now resolves**
 
 Run:
 
@@ -75,13 +75,13 @@ node -p "JSON.stringify(Object.keys(require('./node_modules/zod/package.json').e
 
 Expected: the list now includes `./v3` and `./v4`.
 
-- [ ] **Step 4: Confirm nothing regressed**
+- [x] **Step 4: Confirm nothing regressed**
 
 Run: `npx tsc -b --noEmit && npx vitest run && npm run build`
 
 Expected: clean typecheck, 32 tests passing, successful build. zod 3.25 is backwards compatible with the 3.23 API the app already uses.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json package-lock.json
