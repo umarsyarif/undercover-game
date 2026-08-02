@@ -342,7 +342,7 @@ Fix it where the order is built, so the guarantee holds for every consumer.
 - Modify: `src/services/gameLogic.ts` (`getDescriptionPhaseOrder`)
 - Test: `src/test/ordering.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append inside the top-level `describe` in `src/test/ordering.test.ts`:
 
@@ -376,13 +376,13 @@ Append inside the top-level `describe` in `src/test/ordering.test.ts`:
   });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `npx vitest run src/test/ordering.test.ts`
 
 Expected: FAIL on at least one attempt with `expected 'mrwhite' not to be 'mrwhite'`. If all 50 attempts pass, the randomness did not hit the case — raise the loop to 200 and rerun before concluding the bug is absent.
 
-- [ ] **Step 3: Guard the first active player**
+- [x] **Step 3: Guard the first active player**
 
 In `src/services/gameLogic.ts`, replace the trailing Mr. White block in `getDescriptionPhaseOrder` — the one that starts `// Check if Mr. White is first and handle it if needed` — with:
 
@@ -408,13 +408,13 @@ In `src/services/gameLogic.ts`, replace the trailing Mr. White block in `getDesc
 
 When every surviving player is Mr. White there is nothing to swap with, so the order is returned unchanged — correct, and the game is already over by then.
 
-- [ ] **Step 4: Run the ordering tests**
+- [x] **Step 4: Run the ordering tests**
 
 Run: `npx vitest run src/test/ordering.test.ts`
 
 Expected: all passing, including the 13 pre-existing tests. Those encode the existing ordering rules — if one breaks, the new guard is too aggressive.
 
-- [ ] **Step 5: Run everything and commit**
+- [x] **Step 5: Run everything and commit**
 
 Run: `npx vitest run && npx tsc -b --force --noEmit`
 

@@ -179,17 +179,22 @@ export class GameLogic {
       }
     }
     
-    // Check if Mr. White is first and handle it if needed
-    if (result.length > 0 && result[0].role === 'mrwhite') {
-      // Find a non-Mr. White player to swap with
-      const nonMrWhiteIndex = result.findIndex(p => p.role !== 'mrwhite');
-      
-      // If there's a non-Mr. White player, swap them to the first position
-      if (nonMrWhiteIndex > 0) {
-        [result[0], result[nonMrWhiteIndex]] = [result[nonMrWhiteIndex], result[0]];
+    // Mr. White must not speak first. Consumers filter out eliminated players
+    // after calling this, so the guarantee has to hold for the first ACTIVE
+    // player, not merely for index 0.
+    const firstActive = result.findIndex(p => !p.isEliminated);
+
+    if (firstActive !== -1 && result[firstActive].role === 'mrwhite') {
+      const replacement = result.findIndex(
+        (p, i) => i > firstActive && !p.isEliminated && p.role !== 'mrwhite'
+      );
+
+      if (replacement !== -1) {
+        [result[firstActive], result[replacement]] =
+          [result[replacement], result[firstActive]];
       }
     }
-    
+
     return result;
   }
 

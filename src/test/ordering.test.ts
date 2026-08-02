@@ -380,4 +380,32 @@ describe('Card Ordering Logic', () => {
       expect(votingOrder[0].id).toBe(1);
     });
   });
-}); 
+
+  describe('Mr. White never leads the active order', () => {
+    const roster = (): Player[] => [
+      { id: 1, name: 'P1', role: 'civilian',   word: 'a', cardIndex: 0, hasRevealed: true, isEliminated: false },
+      { id: 2, name: 'P2', role: 'mrwhite',    word: '',  cardIndex: 1, hasRevealed: true, isEliminated: false },
+      { id: 3, name: 'P3', role: 'civilian',   word: 'a', cardIndex: 2, hasRevealed: true, isEliminated: false },
+      { id: 4, name: 'P4', role: 'undercover', word: 'b', cardIndex: 3, hasRevealed: true, isEliminated: false },
+    ];
+
+    it('does not put Mr. White first once the leader is eliminated', () => {
+      for (let attempt = 0; attempt < 50; attempt++) {
+        const players = roster();
+        GameLogic.resetRandomStart();
+
+        // Eliminate whoever the order picked to lead.
+        const initial = GameLogic.getDescriptionPhaseOrder(players);
+        const leader = players.find(p => p.id === initial[0].id)!;
+        leader.isEliminated = true;
+
+        const active = GameLogic.getDescriptionPhaseOrder(players)
+          .filter(p => !p.isEliminated);
+
+        if (active.length > 1) {
+          expect(active[0].role).not.toBe('mrwhite');
+        }
+      }
+    });
+  });
+});
