@@ -155,6 +155,10 @@ function App() {
     }, 300);
   };
 
+  // Renders the screen for the current phase. Nested so it keeps access to the
+  // hooks above, and so the word-management modal can render beside it.
+  function renderScreen() {
+
   // Render different screens based on game phase
   if (gameState.phase === 'setup') {
     return (
@@ -174,12 +178,6 @@ function App() {
           isStartButtonEnabled={playerManagement.isStartButtonEnabled}
           onStart={handleStart}
           availableWords={wordManagement.getAvailableWordCount()}
-        />
-        
-        <WordManagementModal
-          isOpen={modals.showWordManagementModal}
-          onClose={() => closeModal('showWordManagementModal')}
-          onWordsUpdated={handleWordsUpdated}
         />
       </>
     );
@@ -286,11 +284,6 @@ function App() {
           </DialogContent>
         </Dialog>
 
-        <WordManagementModal
-          isOpen={modals.showWordManagementModal}
-          onClose={() => closeModal('showWordManagementModal')}
-          onWordsUpdated={handleWordsUpdated}
-        />
       </>
     );
   }
@@ -473,7 +466,19 @@ function App() {
     );
   }
 
-  return null;
+    return null;
+  }
+
+  return (
+    <>
+      {renderScreen()}
+      <WordManagementModal
+        isOpen={modals.showWordManagementModal}
+        onClose={() => closeModal('showWordManagementModal')}
+        onWordsUpdated={handleWordsUpdated}
+      />
+    </>
+  );
 }
 
 export default App;

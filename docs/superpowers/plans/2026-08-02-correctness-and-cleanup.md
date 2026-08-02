@@ -874,11 +874,11 @@ Once the pool runs dry this is the **default** end-of-session experience.
 **Files:**
 - Modify: `src/App.tsx` (remove two renders, add one, wrap the return)
 
-- [ ] **Step 1: Remove the per-branch renders**
+- [x] **Step 1: Remove the per-branch renders**
 
 In `src/App.tsx`, delete both existing `<WordManagementModal ... />` blocks — one in the `setup` branch (~line 179), one in the `card-selection` branch (~line 289). Leave the `<>` fragments that wrapped them; the setup branch's fragment can collapse back to a bare `<PlayerSetup ... />` if it now has a single child.
 
-- [ ] **Step 2: Move the phase switch into a nested function**
+- [x] **Step 2: Move the phase switch into a nested function**
 
 The modal has to render alongside whichever screen is active, and it needs the hooks that live in `App`. So wrap the phase switch in a nested function and render the modal beside its result.
 
@@ -922,13 +922,13 @@ export default App;
 
 Every `if (gameState.phase === '...') { return ( ... ); }` block is now inside `renderScreen` and needs no other change. Re-indent them by two spaces if your formatter does not.
 
-- [ ] **Step 3: Typecheck**
+- [x] **Step 3: Typecheck**
 
 Run: `npx tsc -b --noEmit`
 
 Expected: clean.
 
-- [ ] **Step 4: Reproduce the original bug and confirm it is gone**
+- [x] **Step 4: Reproduce the original bug and confirm it is gone**
 
 Run: `npm run dev`. In devtools console, exhaust the pool:
 
@@ -941,7 +941,7 @@ Reload, start a 3-player game, finish it, and press "Lanjut".
 
 Expected: the word-management modal appears over the game-over screen. Before this fix, nothing happened.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/App.tsx
