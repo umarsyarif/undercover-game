@@ -1,6 +1,22 @@
-import { WordPair, WordApiRequest, WordApiResponse } from '../types/gameTypes';
+import { z } from 'zod';
+import {
+  WordFetchError,
+  MAX_AVOID_ENTRIES,
+  type WordPair,
+  type WordApiRequest,
+  type WordApiError,
+} from '../types/gameTypes';
 
 const STORAGE_KEY = 'gameWords';
+
+const WordApiResponseSchema = z.object({
+  data: z.array(
+    z.object({
+      civilian: z.string().min(1),
+      undercover: z.string().min(1),
+    })
+  ).min(1),
+});
 
 // Default word pairs
 const defaultWords: WordPair[] = [
@@ -68,59 +84,92 @@ export class WordService {
     return unplayedWords.length === 0;
   }
 
-  // Fetch new words from API
-  static async fetchNewWords(numberOfWords: number): Promise<WordPair[]> {
-    const apiEndpoint = import.meta.env.VITE_WORD_API_ENDPOINT;
-    
-    if (!apiEndpoint) {
-      throw new Error('API endpoint not configured');
+  /** Words sent as `avoid`, newest first, both halves of each pair. */
+  private static recentWords(limit: number): string[] {
+    const words: string[] = [];
+    for (const pair of this.getAllWords().slice(-Math.ceil(limit / 2)).reverse()) {
+      words.push(pair.civilian, pair.undercover);
     }
-
-    const existingWords = this.getAllWords().map(word => ({
-      civilian: word.civilian,
-      undercover: word.undercover
-    }));
-
-    const requestBody: WordApiRequest = {
-      number_of_words: numberOfWords,
-      existing_words: existingWords
-    };
-
-    try {
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data: WordApiResponse = await response.json();
-      
-      if (!data.data || !Array.isArray(data.data)) {
-        throw new Error('Invalid API response format');
-      }
-
-      return data.data.map(word => ({
-        civilian: word.civilian,
-        undercover: word.undercover,
-        played: false
-      }));
-    } catch (error) {
-      console.error('Error fetching new words:', error);
-      throw error;
-    }
+    return words.slice(0, limit);
   }
 
-  // Add new words to storage
-  static addNewWords(newWords: WordPair[]): void {
-    const existingWords = this.getAllWords();
-    const allWords = [...existingWords, ...newWords];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(allWords));
+  /** Canonical key for a pair, order- and case-insensitive. */
+  private static pairKey(civilian: string, undercover: string): string {
+    return [civilian.trim().toLowerCase(), undercover.trim().toLowerCase()]
+      .sort()
+      .join('|');
+  }
+
+  // Fetch new words from the /api/words Pages Function
+  static async fetchNewWords(numberOfWords: number): Promise<WordPair[]> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60_000);
+
+    let response: Response;
+    try {
+      response = await fetch('/api/words', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          count: numberOfWords,
+          avoid: this.recentWords(MAX_AVOID_ENTRIES),
+        } satisfies WordApiRequest),
+        signal: controller.signal,
+      });
+    } catch {
+      throw new WordFetchError('upstream_error', 'Gagal menghubungi server. Periksa koneksi.');
+    } finally {
+      clearTimeout(timer);
+    }
+
+    let body: unknown;
+    try {
+      body = await response.json();
+    } catch {
+      throw new WordFetchError('bad_response', 'Jawaban server tidak bisa dibaca.');
+    }
+
+    if (!response.ok) {
+      const err = body as Partial<WordApiError>;
+      throw new WordFetchError(
+        err.error ?? 'server_error',
+        err.message ?? 'Terjadi kesalahan di server.'
+      );
+    }
+
+    const parsed = WordApiResponseSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new WordFetchError('bad_response', 'Server mengirim kata yang tidak valid.');
+    }
+
+    return parsed.data.data.map(word => ({
+      civilian: word.civilian,
+      undercover: word.undercover,
+      played: false,
+    }));
+  }
+
+  /**
+   * Append new pairs, skipping any that already exist — including reversed
+   * and differently-cased duplicates. Returns how many were actually added.
+   */
+  static addNewWords(newWords: WordPair[]): number {
+    const existing = this.getAllWords();
+    const seen = new Set(existing.map(w => this.pairKey(w.civilian, w.undercover)));
+
+    const fresh: WordPair[] = [];
+    for (const word of newWords) {
+      const key = this.pairKey(word.civilian, word.undercover);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      fresh.push(word);
+    }
+
+    if (fresh.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...existing, ...fresh]));
+    }
+
+    return fresh.length;
   }
 
   // Get total word count

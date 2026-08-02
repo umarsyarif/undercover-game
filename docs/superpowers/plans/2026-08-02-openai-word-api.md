@@ -872,7 +872,7 @@ Behaviour changes beyond the endpoint swap:
 - Modify: `src/services/wordService.ts:72-124`
 - Rewrite: `src/test/word-service.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Overwrite `src/test/word-service.test.ts`:
 
@@ -908,8 +908,13 @@ const respondWith = (body: unknown, ok = true, status = 200) =>
 
 describe('WordService', () => {
   beforeEach(() => {
+    // clearAllMocks wipes call history but keeps implementations. resetAllMocks
+    // would strip localStorageMock's getItem/setItem bodies, so storage would
+    // silently stop persisting and every count assertion would see only the
+    // five seeded defaults.
+    vi.clearAllMocks();
+    (global.fetch as never as ReturnType<typeof vi.fn>).mockReset();
     localStorageMock.clear();
-    vi.resetAllMocks();
     WordService.initializeWords();
   });
 
@@ -960,10 +965,12 @@ describe('WordService', () => {
     it('throws a typed error when the endpoint reports one', async () => {
       respondWith({ error: 'upstream_error', message: 'Layanan AI sedang sibuk.' }, false, 502);
 
-      await expect(WordService.fetchNewWords(1)).rejects.toBeInstanceOf(WordFetchError);
-      await expect(WordService.fetchNewWords(1)).rejects.toMatchObject({
-        code: 'upstream_error',
-      });
+      // respondWith queues a single response, so call once and assert twice
+      // against the same rejection rather than making a second unmocked call.
+      const error = await WordService.fetchNewWords(1).catch(e => e);
+
+      expect(error).toBeInstanceOf(WordFetchError);
+      expect(error).toMatchObject({ code: 'upstream_error' });
     });
 
     it('rejects a response whose items are malformed', async () => {
@@ -1022,13 +1029,13 @@ describe('WordService', () => {
 });
 ```
 
-- [ ] **Step 2: Run them and watch them fail**
+- [x] **Step 2: Run them and watch them fail**
 
 Run: `npx vitest run src/test/word-service.test.ts`
 
 Expected: failures — `fetchNewWords` still reads `import.meta.env` and `addNewWords` returns `void`.
 
-- [ ] **Step 3: Rewrite the service methods**
+- [x] **Step 3: Rewrite the service methods**
 
 In `src/services/wordService.ts`, replace `fetchNewWords` and `addNewWords` (lines 71-124) with:
 
@@ -1122,7 +1129,7 @@ In `src/services/wordService.ts`, replace `fetchNewWords` and `addNewWords` (lin
   }
 ```
 
-- [ ] **Step 4: Update the imports and add the response schema**
+- [x] **Step 4: Update the imports and add the response schema**
 
 Replace the import line at the top of `src/services/wordService.ts`:
 
@@ -1150,19 +1157,19 @@ const WordApiResponseSchema = z.object({
 
 Delete the now-unused `WordApiRequest, WordApiResponse` import from the old line and the duplicate `const STORAGE_KEY` if one remains.
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `npx vitest run src/test/word-service.test.ts`
 
 Expected: 10 passing.
 
-- [ ] **Step 6: Typecheck and run everything**
+- [x] **Step 6: Typecheck and run everything**
 
 Run: `npx tsc -b --force --noEmit && npx vitest run`
 
 Expected: clean, 56 tests passing.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/services/wordService.ts src/test/word-service.test.ts
