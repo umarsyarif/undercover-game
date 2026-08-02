@@ -167,39 +167,19 @@ export const useGameState = () => {
 
   // Check win conditions
   const checkWinConditions = () => {
-    const activePlayers = getActivePlayers();
-    const activeCivilians = activePlayers.filter(p => p.role === 'civilian');
-    const activeUndercovers = activePlayers.filter(p => p.role === 'undercover');
-    const activeMrWhites = activePlayers.filter(p => p.role === 'mrwhite');
-
-    let winner: 'civilian' | 'undercover' | 'mrwhite' | null = null;
-
-    // Mr. White wins if they are the last player standing
-    if (activePlayers.length === 1 && activeMrWhites.length === 1) {
-      winner = 'mrwhite';
-    }
-    // Civilians win if all Undercovers and Mr. White are eliminated
-    else if (activeUndercovers.length === 0 && activeMrWhites.length === 0) {
-      winner = 'civilian';
-    }
-    // Undercover wins if only 1 Civilian remains with any number of Undercovers
-    else if (activeCivilians.length === 1 && activeUndercovers.length > 0) {
-      winner = 'undercover';
-    }
+    const winner = GameLogic.checkWinConditions(gameState.players);
 
     if (winner) {
       // Mark current word pair as played when game ends
       WordService.markWordAsPlayed(gameState.gameWords.civilian, gameState.gameWords.undercover);
-      
+
       updateGameState({
         winner,
         phase: 'game-over'
       });
-      
-      return winner;
     }
 
-    return null;
+    return winner;
   };
 
   return {

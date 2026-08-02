@@ -250,7 +250,7 @@ Fix `GameLogic`, make the hook delegate to it, and the existing test file starts
 - Modify: `src/hooks/useGameState.ts:175-210`
 - Test: `src/test/win-conditions.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append inside the top-level `describe('Game Win Conditions', ...)` in `src/test/win-conditions.test.ts`, just before its closing `});`:
 
@@ -279,13 +279,13 @@ Append inside the top-level `describe('Game Win Conditions', ...)` in `src/test/
   });
 ```
 
-- [ ] **Step 2: Run them and watch the first one fail**
+- [x] **Step 2: Run them and watch the first one fail**
 
 Run: `npx vitest run src/test/win-conditions.test.ts`
 
 Expected: the "one civilian and Mr. White remain" test FAILS with `expected null to be 'mrwhite'`. The "both infiltrators" test passes already.
 
-- [ ] **Step 3: Rewrite GameLogic.checkWinConditions**
+- [x] **Step 3: Rewrite GameLogic.checkWinConditions**
 
 In `src/services/gameLogic.ts`, replace the whole method (lines 76-107, from the `// Check win conditions` comment through its closing brace):
 
@@ -318,13 +318,13 @@ In `src/services/gameLogic.ts`, replace the whole method (lines 76-107, from the
   }
 ```
 
-- [ ] **Step 4: Run the win-condition tests**
+- [x] **Step 4: Run the win-condition tests**
 
 Run: `npx vitest run src/test/win-conditions.test.ts`
 
 Expected: 7 passing. All 5 pre-existing tests still pass — verify that, because they encode rules we are keeping.
 
-- [ ] **Step 5: Delegate from the live hook**
+- [x] **Step 5: Delegate from the live hook**
 
 In `src/hooks/useGameState.ts`, replace the whole `checkWinConditions` function (lines 175-210):
 
@@ -349,13 +349,13 @@ In `src/hooks/useGameState.ts`, replace the whole `checkWinConditions` function 
 
 `GameLogic` is already imported at the top of the file.
 
-- [ ] **Step 6: Typecheck and run everything**
+- [x] **Step 6: Typecheck and run everything**
 
 Run: `npx tsc -b --noEmit && npx vitest run`
 
 Expected: clean typecheck, 40 tests passing.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/services/gameLogic.ts src/hooks/useGameState.ts src/test/win-conditions.test.ts

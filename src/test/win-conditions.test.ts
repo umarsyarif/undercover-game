@@ -102,4 +102,27 @@ describe('Game Win Conditions', () => {
       expect(winner).toBeNull();
     });
   });
-}); 
+
+  describe('Infiltrator parity', () => {
+    it('should declare Mr. White the winner when one civilian and Mr. White remain', () => {
+      const players = createTestPlayers();
+
+      players[0].isEliminated = true; // Civilian
+      players[2].isEliminated = true; // Undercover
+
+      // Remaining: 1 civilian + Mr. White, no undercovers
+      const winner = GameLogic.checkWinConditions(players);
+      expect(winner).toBe('mrwhite');
+    });
+
+    it('should declare undercover the winner when one civilian faces both infiltrators', () => {
+      const players = createTestPlayers();
+
+      players[0].isEliminated = true; // Civilian
+
+      // Remaining: 1 civilian + undercover + Mr. White
+      const winner = GameLogic.checkWinConditions(players);
+      expect(winner).toBe('undercover');
+    });
+  });
+});

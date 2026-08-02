@@ -73,36 +73,30 @@ export class GameLogic {
     return players;
   }
 
-  // Check win conditions
+  // Check win conditions. This is the single source of truth — useGameState
+  // delegates to it, and the tests exercise the same code the game runs.
   static checkWinConditions(players: Player[]): 'civilian' | 'undercover' | 'mrwhite' | null {
-    const activePlayers = players.filter(p => !p.isEliminated);
-    const activeCivilians = activePlayers.filter(p => p.role === 'civilian');
-    const activeUndercover = activePlayers.filter(p => p.role === 'undercover');
-    const activeMrWhite = activePlayers.filter(p => p.role === 'mrwhite');
+    const active = players.filter(p => !p.isEliminated);
+    const civilians = active.filter(p => p.role === 'civilian');
+    const undercovers = active.filter(p => p.role === 'undercover');
+    const mrWhites = active.filter(p => p.role === 'mrwhite');
 
-    // If Mr. White is the last player standing, they win
-    if (activePlayers.length === 1 && activeMrWhite.length === 1) {
+    // Mr. White outlasts everyone.
+    if (active.length === 1 && mrWhites.length === 1) {
       return 'mrwhite';
     }
 
-    // If Mr. White is eliminated and didn't guess correctly, check other conditions
-    const mrWhiteEliminated = players.some(p => p.role === 'mrwhite' && p.isEliminated);
-    
-    // If all undercover agents are eliminated
-    if (activeUndercover.length === 0) {
-      // If Mr. White is still alive, they haven't won yet
-      if (activeMrWhite.length > 0) {
-        return null; // Game continues, Mr. White needs to guess
-      }
+    // Every infiltrator is gone.
+    if (undercovers.length === 0 && mrWhites.length === 0) {
       return 'civilian';
     }
 
-    // If undercover agents equal or outnumber civilians (and Mr. White is eliminated or doesn't exist)
-    if (activeUndercover.length >= activeCivilians.length && activeMrWhite.length === 0) {
-      return 'undercover';
+    // Only one civilian is left, so the infiltrators can no longer be outvoted.
+    // Undercover takes the win when present; otherwise it is Mr. White's.
+    if (civilians.length === 1) {
+      return undercovers.length > 0 ? 'undercover' : 'mrwhite';
     }
 
-    // Game continues
     return null;
   }
 
