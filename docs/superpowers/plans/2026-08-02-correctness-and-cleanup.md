@@ -616,7 +616,7 @@ Same file, same lines: `[...gameState.players]` is a shallow copy, so `updatedPl
 - Modify: `src/hooks/useGamePhases.ts:14-84`
 - Modify: `src/App.tsx:136-148`
 
-- [ ] **Step 1: Add the flag to the type**
+- [x] **Step 1: Add the flag to the type**
 
 In `src/types/gameTypes.ts`, add one line to `GameState`, after `round`:
 
@@ -641,17 +641,17 @@ export interface GameState {
 }
 ```
 
-- [ ] **Step 2: Set it in all three state literals**
+- [x] **Step 2: Set it in all three state literals**
 
 In `src/hooks/useGameState.ts`, add `needsNameEntry: true,` immediately after each `round:` line — there are three: the `useState` initialiser (~line 21), the `setGameState` inside `initializeGame` (~line 101), and the one inside `resetGame` (~line 126).
 
-- [ ] **Step 3: Typecheck to find every remaining construction site**
+- [x] **Step 3: Typecheck to find every remaining construction site**
 
 Run: `npx tsc -b --noEmit`
 
 Expected: errors pointing at any other place that builds a full `GameState`. Add `needsNameEntry` there too. `App.tsx:136` uses `updateGameState` with a `Partial<GameState>`, so it will not error — Step 5 handles it.
 
-- [ ] **Step 4: Rewrite the three mutating handlers**
+- [x] **Step 4: Rewrite the three mutating handlers**
 
 In `src/hooks/useGamePhases.ts`, replace `handleCardSelect`, `handleNameSubmit` and `handleWordRevealNext` (lines 14-84) with:
 
@@ -732,7 +732,7 @@ In `src/hooks/useGamePhases.ts`, replace `handleCardSelect`, `handleNameSubmit` 
 
 Note `handleWordRevealNext` now always writes `cardIndex`. Previously it only did so when `round > 1`; on the first game the card was already assigned by `handleNameSubmit`, so writing the same value again is a no-op.
 
-- [ ] **Step 5: Update the continue handler**
+- [x] **Step 5: Update the continue handler**
 
 In `src/App.tsx`, inside `handleContinueWithSamePlayers`, replace:
 
@@ -747,20 +747,20 @@ with:
       needsNameEntry: false,
 ```
 
-- [ ] **Step 6: Typecheck**
+- [x] **Step 6: Typecheck**
 
 Run: `npx tsc -b --noEmit`
 
 Expected: clean.
 
-- [ ] **Step 7: Verify both paths in the browser**
+- [x] **Step 7: Verify both paths in the browser**
 
 Run: `npm run dev`.
 
 - First game: 3 players. Expected — the name modal appears for each player, and no turn modal.
 - Finish the game, then press "Lanjut". Expected — **no** name modal, the turn modal announces each player by their existing name, and every name from the first game is still shown.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/types/gameTypes.ts src/hooks/useGameState.ts src/hooks/useGamePhases.ts src/App.tsx

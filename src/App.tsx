@@ -137,7 +137,8 @@ function App() {
       currentPlayerIndex: 0,
       selectedCard: null,
       players: resetPlayers,
-      round: 2, // Set round to 2 to skip name input phase
+      round: 1,
+      needsNameEntry: false,
       gameWords: newWordPair,
       selectedPlayerToEliminate: null,
       eliminatedPlayer: null,

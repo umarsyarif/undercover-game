@@ -16,71 +16,72 @@ export const useGamePhases = (
     const isCardTaken = gameState.players.some(p => p.cardIndex === cardIndex);
     if (isCardTaken) return;
 
-    updateGameState({ selectedCard: cardIndex });
-    
-    if (gameState.round === 1) {
+    if (gameState.needsNameEntry) {
+      updateGameState({ selectedCard: cardIndex });
       openModal('showNameModal');
-    } else {
-      // For round 2+ (continuing with same players), automatically assign the card
-      const updatedPlayers = [...gameState.players];
-      updatedPlayers[gameState.currentPlayerIndex].cardIndex = cardIndex;
-      
-      updateGameState({ 
-        players: updatedPlayers,
-        selectedCard: cardIndex
-      });
-      
-      openModal('showWordModal');
+      return;
     }
+
+    // Names are already known, so claim the card and go straight to the word.
+    const updatedPlayers = gameState.players.map((player, index) =>
+      index === gameState.currentPlayerIndex ? { ...player, cardIndex } : player
+    );
+
+    updateGameState({ players: updatedPlayers, selectedCard: cardIndex });
+    openModal('showWordModal');
   };
 
   // Handle name submission
   const handleNameSubmit = (playerName: string) => {
-    if (playerName.trim() && gameState.selectedCard !== null) {
-      const updatedPlayers = [...gameState.players];
-      updatedPlayers[gameState.currentPlayerIndex].name = playerName.trim();
-      updatedPlayers[gameState.currentPlayerIndex].cardIndex = gameState.selectedCard;
-      
-      updateGameState({ players: updatedPlayers });
-      
-      closeModal('showNameModal');
-      openModal('showWordModal');
-    }
+    if (!playerName.trim() || gameState.selectedCard === null) return;
+
+    const selectedCard = gameState.selectedCard;
+    const updatedPlayers = gameState.players.map((player, index) =>
+      index === gameState.currentPlayerIndex
+        ? { ...player, name: playerName.trim(), cardIndex: selectedCard }
+        : player
+    );
+
+    updateGameState({ players: updatedPlayers });
+
+    closeModal('showNameModal');
+    openModal('showWordModal');
   };
 
   // Handle word reveal next
   const handleWordRevealNext = (totalPlayers: number) => {
-    if (gameState.selectedCard !== null) {
-      const updatedPlayers = [...gameState.players];
-      updatedPlayers[gameState.currentPlayerIndex].hasRevealed = true;
-      
-      if (gameState.round > 1) {
-        updatedPlayers[gameState.currentPlayerIndex].cardIndex = gameState.selectedCard;
-      }
-      
-      closeModal('showWordModal');
-      
-      // Add a small delay to prevent showing next player's word during modal transition
-      setTimeout(() => {
-        if (gameState.currentPlayerIndex < totalPlayers - 1) {
-          updateGameState({
-            currentPlayerIndex: gameState.currentPlayerIndex + 1,
-            selectedCard: null,
-            players: updatedPlayers
-          });
-          
-          if (gameState.round > 1) {
-            openModal('showTurnModal');
-          }
-        } else {
-          updateGameState({
-            phase: 'description',
-            currentPlayerIndex: 0,
-            players: updatedPlayers
-          });
+    if (gameState.selectedCard === null) return;
+
+    const selectedCard = gameState.selectedCard;
+    const updatedPlayers = gameState.players.map((player, index) =>
+      index === gameState.currentPlayerIndex
+        ? { ...player, hasRevealed: true, cardIndex: selectedCard }
+        : player
+    );
+
+    closeModal('showWordModal');
+
+    // Small delay so the next player's word is not visible during the
+    // modal close transition.
+    setTimeout(() => {
+      if (gameState.currentPlayerIndex < totalPlayers - 1) {
+        updateGameState({
+          currentPlayerIndex: gameState.currentPlayerIndex + 1,
+          selectedCard: null,
+          players: updatedPlayers
+        });
+
+        if (!gameState.needsNameEntry) {
+          openModal('showTurnModal');
         }
-      }, 200); // 200ms delay to ensure modal is fully closed
-    }
+      } else {
+        updateGameState({
+          phase: 'description',
+          currentPlayerIndex: 0,
+          players: updatedPlayers
+        });
+      }
+    }, 200);
   };
 
   // Handle turn modal next
