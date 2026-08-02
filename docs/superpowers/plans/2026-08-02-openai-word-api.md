@@ -170,7 +170,7 @@ In its own module so it is diffable in review and importable by tests.
 **Files:**
 - Create: `functions/api/prompt.ts`
 
-- [ ] **Step 1: Create the file**
+- [x] **Step 1: Create the file**
 
 ```ts
 /**
@@ -219,7 +219,7 @@ export function buildInput(count: number, avoid: string[]): string {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add functions/api/prompt.ts
