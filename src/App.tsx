@@ -76,7 +76,25 @@ function App() {
   // Words updated handler
   const handleWordsUpdated = () => {
     const config = playerManagement.getPlayerConfig();
-    return wordManagement.handleWordsUpdated(initializeGame, config);
+    const result = wordManagement.handleWordsUpdated(initializeGame, config);
+
+    // initializeGame regenerates players from scratch. If names were already
+    // entered this session, carry them over rather than blanking them.
+    const previousNames = gameState.players
+      .filter(p => p.name.trim() !== '')
+      .map(p => ({ id: p.id, name: p.name }));
+
+    if (result.success && previousNames.length > 0) {
+      updateGameState({
+        needsNameEntry: false,
+        players: gameState.players.map(player => ({
+          ...player,
+          name: previousNames.find(n => n.id === player.id)?.name ?? player.name
+        }))
+      });
+    }
+
+    return result;
   };
 
   // Name submission handler

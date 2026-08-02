@@ -960,7 +960,7 @@ that was only mounted in two of six phases, so the button did nothing."
 **Files:**
 - Modify: `src/App.tsx` (`handleWordsUpdated`)
 
-- [ ] **Step 1: Preserve names when a game is already in progress**
+- [x] **Step 1: Preserve names when a game is already in progress**
 
 In `src/App.tsx`, replace `handleWordsUpdated`:
 
@@ -990,19 +990,19 @@ In `src/App.tsx`, replace `handleWordsUpdated`:
   };
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc -b --noEmit`
 
 Expected: clean.
 
-- [ ] **Step 3: Verify by hand**
+- [x] **Step 3: Verify by hand**
 
 Run: `npm run dev`. Exhaust all but one pair using the console snippet from Task 9 Step 5 (leave one `played: false`). Start a 3-player game, enter a name for the first player, then press the refresh button on the card-selection screen and choose "Reuse Existing Words".
 
 Expected: the first player's name is still there.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/App.tsx
