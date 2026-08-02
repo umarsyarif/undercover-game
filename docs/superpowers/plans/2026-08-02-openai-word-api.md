@@ -1201,7 +1201,7 @@ Also the only English strings in an otherwise Indonesian UI.
 **Files:**
 - Modify: `src/components/WordManagementModal.tsx`
 
-- [ ] **Step 1: Rewrite the fetch handler**
+- [x] **Step 1: Rewrite the fetch handler**
 
 In `src/components/WordManagementModal.tsx`, replace `handleFetchNewWords`:
 
@@ -1240,7 +1240,7 @@ In `src/components/WordManagementModal.tsx`, replace `handleFetchNewWords`:
   };
 ```
 
-- [ ] **Step 2: Add the notice state and imports**
+- [x] **Step 2: Add the notice state and imports**
 
 Add alongside the existing `useState` calls:
 
@@ -1256,7 +1256,7 @@ import { WordFetchError } from '../types/gameTypes';
 
 Clear `notice` wherever `setError(null)` is already called, and in `handleClose`.
 
-- [ ] **Step 3: Render the notice**
+- [x] **Step 3: Render the notice**
 
 Directly below the existing `{error && ( ... )}` block, add:
 
@@ -1269,7 +1269,7 @@ Directly below the existing `{error && ( ... )}` block, add:
                 )}
 ```
 
-- [ ] **Step 4: Translate the copy and lower the cap**
+- [x] **Step 4: Translate the copy and lower the cap**
 
 Replace these strings in the same file:
 
@@ -1290,13 +1290,13 @@ Replace these strings in the same file:
 
 Change the number input's `max="50"` to `max="20"`, and the `useState(5)` default stays at 5.
 
-- [ ] **Step 5: Typecheck and test**
+- [x] **Step 5: Typecheck and test**
 
 Run: `npx tsc -b --force --noEmit && npx vitest run`
 
 Expected: clean, 56 passing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/WordManagementModal.tsx

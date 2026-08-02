@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Loader2, RefreshCw, Download, AlertCircle } from 'lucide-react';
 import { WordService } from '../services/wordService';
+import { WordFetchError } from '../types/gameTypes';
 
 interface WordManagementModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [numberOfWords, setNumberOfWords] = useState(5);
   const [showNumberInput, setShowNumberInput] = useState(false);
 
@@ -31,24 +33,38 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
   const handleGetNewWords = () => {
     setShowNumberInput(true);
     setError(null);
+    setNotice(null);
   };
 
   const handleFetchNewWords = async () => {
-    if (numberOfWords < 1 || numberOfWords > 50) {
-      setError('Please enter a number between 1 and 50');
+    if (numberOfWords < 1 || numberOfWords > 20) {
+      setError('Masukkan angka antara 1 dan 20');
       return;
     }
 
     setIsLoading(true);
     setError(null);
+    setNotice(null);
 
     try {
       const newWords = await WordService.fetchNewWords(numberOfWords);
-      WordService.addNewWords(newWords);
+      const added = WordService.addNewWords(newWords);
+
+      if (added === 0) {
+        setError('Semua kata yang dibuat sudah ada. Coba lagi.');
+        return;
+      }
+
+      if (added < newWords.length) {
+        setNotice(`${newWords.length - added} kata sudah ada, ${added} ditambahkan.`);
+      }
+
       onWordsUpdated();
       onClose();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to fetch new words');
+    } catch (err) {
+      setError(
+        err instanceof WordFetchError ? err.message : 'Gagal mengambil kata baru.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -57,6 +73,7 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
   const handleClose = () => {
     setShowNumberInput(false);
     setError(null);
+    setNotice(null);
     setNumberOfWords(5);
     onClose();
   };
@@ -69,7 +86,7 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
       <DialogContent className="max-w-md mx-auto">
         <DialogHeader>
           <DialogTitle className="text-center text-xl">
-            🎯 All Words Used!
+            🎯 Semua Kata Sudah Dipakai!
           </DialogTitle>
         </DialogHeader>
 
@@ -77,11 +94,11 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
           {/* Statistics */}
           <Card className="p-4 bg-blue-50 border-blue-200">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-2">Word Statistics</p>
+              <p className="text-sm text-gray-600 mb-2">Statistik Kata</p>
               <div className="flex justify-center gap-4">
                 <div>
                   <span className="text-2xl font-bold text-blue-600">{playedWords}</span>
-                  <p className="text-xs text-gray-500">Played</p>
+                  <p className="text-xs text-gray-500">Dipakai</p>
                 </div>
                 <div className="text-gray-300">/</div>
                 <div>
@@ -96,7 +113,7 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
             <>
               <div className="text-center">
                 <p className="text-gray-600 mb-6">
-                  You've used all available word pairs! Choose an option to continue:
+                  Semua pasangan kata sudah dipakai. Pilih salah satu:
                 </p>
               </div>
 
@@ -107,7 +124,7 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl flex items-center justify-center gap-2"
                 >
                   <Download className="h-5 w-5" />
-                  Get New Words from API
+                  Ambil Kata Baru dari AI
                 </Button>
 
                 <Button
@@ -116,7 +133,7 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
                   className="w-full py-4 rounded-xl flex items-center justify-center gap-2 border-2 border-blue-300 hover:bg-blue-50"
                 >
                   <RefreshCw className="h-5 w-5" />
-                  Reuse Existing Words
+                  Pakai Ulang Kata Lama
                 </Button>
               </div>
             </>
@@ -124,19 +141,19 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
             <>
               <div className="text-center">
                 <p className="text-gray-600 mb-4">
-                  How many new word pairs would you like to fetch?
+                  Berapa pasangan kata baru yang mau diambil?
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Number of word pairs (1-50)
+                    Jumlah pasangan kata (1-20)
                   </label>
                   <Input
                     type="number"
                     min="1"
-                    max="50"
+                    max="20"
                     value={numberOfWords}
                     onChange={(e) => setNumberOfWords(parseInt(e.target.value) || 1)}
                     className="text-center text-lg"
@@ -151,6 +168,13 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
                   </div>
                 )}
 
+                {notice && (
+                  <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <AlertCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                    <p className="text-sm text-blue-600">{notice}</p>
+                  </div>
+                )}
+
                 <div className="flex gap-3">
                   <Button
                     onClick={() => setShowNumberInput(false)}
@@ -158,7 +182,7 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
                     className="flex-1"
                     disabled={isLoading}
                   >
-                    Back
+                    Kembali
                   </Button>
                   <Button
                     onClick={handleFetchNewWords}
@@ -168,10 +192,10 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
                     {isLoading ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Fetching...
+                        Mengambil...
                       </>
                     ) : (
-                      'Fetch Words'
+                      'Ambil Kata'
                     )}
                   </Button>
                 </div>
