@@ -4,11 +4,13 @@ export class GameLogic {
   // Store the random start player for consistent ordering across phases
   private static startPlayerId: number | null = null;
   private static isForward: boolean = true;
+  private static shouldRandomizeStart: boolean = false;
 
   // Reset the random start player (call this when starting a new game)
   static resetRandomStart(): void {
     this.startPlayerId = null;
     this.isForward = true;
+    this.shouldRandomizeStart = true;
   }
 
   // Generate player order for the game
@@ -137,26 +139,31 @@ export class GameLogic {
   // Get ordered players for description phase with randomized start
   static getDescriptionPhaseOrder(players: Player[]): Player[] {
     if (!players || players.length === 0) return [];
-    
-    // If we haven't set a random start player yet, do it now
-    if (this.startPlayerId === null) {
-      // Get all non-Mr. White players
-      const nonMrWhitePlayers = players.filter(p => p.role !== 'mrwhite');
-      
-      // If there are no non-Mr. White players, use any player
-      if (nonMrWhitePlayers.length === 0) {
-        this.startPlayerId = players[Math.floor(Math.random() * players.length)].id;
-      } else {
-        // Pick a random non-Mr. White player as the starting point
-        this.startPlayerId = nonMrWhitePlayers[Math.floor(Math.random() * nonMrWhitePlayers.length)].id;
-      }
-      
-      // Randomly decide if we're going forward or backward
-      this.isForward = Math.random() < 0.5;
-    }
-    
+
     // Sort players by ID first
     const sortedPlayers = [...players].sort((a, b) => a.id - b.id);
+    
+    // If we haven't set a start player yet, use the default ID order unless
+    // a new game explicitly requested a randomized start.
+    if (this.startPlayerId === null) {
+      if (!this.shouldRandomizeStart) {
+        this.startPlayerId = sortedPlayers.find(p => p.role !== 'mrwhite')?.id ?? sortedPlayers[0].id;
+      } else {
+        // Get all non-Mr. White players
+        const nonMrWhitePlayers = players.filter(p => p.role !== 'mrwhite');
+
+        // If there are no non-Mr. White players, use any player
+        if (nonMrWhitePlayers.length === 0) {
+          this.startPlayerId = players[Math.floor(Math.random() * players.length)].id;
+        } else {
+          // Pick a random non-Mr. White player as the starting point
+          this.startPlayerId = nonMrWhitePlayers[Math.floor(Math.random() * nonMrWhitePlayers.length)].id;
+        }
+
+        // Randomly decide if we're going forward or backward
+        this.isForward = Math.random() < 0.5;
+      }
+    }
     
     // Find the index of the start player
     const startIndex = sortedPlayers.findIndex(p => p.id === this.startPlayerId);
