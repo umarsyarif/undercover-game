@@ -33,7 +33,7 @@
 
 ## Task 1: Switch the test runner to jsdom
 
-Three tests in `src/test/word-service.test.ts` have never run — `vitest.config.ts` sets `environment: 'node'` and the file calls `Object.defineProperty(window, ...)` at module scope, so the suite fails to load. `jsdom` is already in `devDependencies`. A second suite, `src/test/ordering.vitest.ts`, never runs either because its filename does not match the `*.{test,spec}.*` include glob — and it is a *superset* of `ordering.test.ts` (13 tests vs 3).
+Three tests in `src/test/word-service.test.ts` have never run — `vitest.config.ts` sets `environment: 'node'` and the file calls `Object.defineProperty(window, ...)` at module scope, so the suite fails to load. `jsdom` is already in `devDependencies`. A second suite, `src/test/ordering.vitest.ts`, never runs either because its filename does not match the `*.{test,spec}.*` include glob. It is a 3-test subset of `ordering.test.ts` and was deleted as redundant.
 
 **Files:**
 - Modify: `vitest.config.ts`
@@ -75,7 +75,7 @@ Run: `git mv src/test/ordering.vitest.ts src/test/ordering.extra.test.ts`
 
 Run: `npx vitest run`
 
-Expected: `Test Files 5 passed (5)`, 38 tests passing. If `ordering.extra.test.ts` fails, that is a real pre-existing bug it was hiding — fix the source, not the test, before continuing.
+Expected: `Test Files 5 passed (5)`, 28 tests passing. If `ordering.extra.test.ts` fails, that is a real pre-existing bug it was hiding — fix the source, not the test, before continuing.
 
 - [x] **Step 6: Commit**
 
@@ -353,7 +353,7 @@ In `src/hooks/useGameState.ts`, replace the whole `checkWinConditions` function 
 
 Run: `npx tsc -b --noEmit && npx vitest run`
 
-Expected: clean typecheck, 40 tests passing.
+Expected: clean typecheck, 30 tests passing.
 
 - [x] **Step 7: Commit**
 
@@ -462,7 +462,7 @@ Expected: clean.
 
 - [x] **Step 4: Play the scenario by hand**
 
-Run: `npm run dev`, then in the browser: 4 players, 1 undercover, 1 Mr. White. Vote out a civilian in round 1, then Mr. White in round 2, and enter a deliberately wrong guess.
+Run: `npm run dev`, then in the browser: 5 players, 1 undercover, 1 Mr. White. Vote out a civilian in round 1, then Mr. White in round 2, and enter a deliberately wrong guess.
 
 Expected: the game ends immediately and declares the undercover the winner. It must **not** show another description round.
 
@@ -593,7 +593,7 @@ Expected: 5 passing, and no import of `GameActionService` anywhere in the file.
 
 Run: `npx vitest run`
 
-Expected: 41 passing.
+Expected: 31 passing.
 
 - [x] **Step 4: Commit**
 
@@ -1068,7 +1068,7 @@ Expected: no output. A hit in `src/components/GameUI.tsx` means that file was mi
 
 Run: `npx tsc -b --force --noEmit && npx vitest run && npm run build`
 
-Expected: clean typecheck, 41 tests passing, successful build.
+Expected: clean typecheck, 31 tests passing, successful build.
 
 - [x] **Step 6: Confirm the app still runs**
 
@@ -1090,9 +1090,9 @@ the three docs that described them as the current architecture."
 
 ## Done criteria
 
-- `npx vitest run` — 41 passing, 0 failing, 5 files
+- `npx vitest run` — 31 passing, 0 failing, 5 files
 - `npx tsc -b --force --noEmit` — clean
 - `npm run build` — succeeds
-- A 4-player game with 1 undercover and 1 Mr. White ends correctly in all four outcomes: civilians clear the board, undercover reaches parity, Mr. White outlasts everyone, Mr. White guesses right
+- A 5-player game with 1 undercover and 1 Mr. White ends correctly in all four outcomes: civilians clear the board, undercover reaches parity, Mr. White outlasts everyone, Mr. White guesses right
 - "Lanjut" keeps names and does not re-ask for them
 - Round numbers advance and match between the description and voting screens

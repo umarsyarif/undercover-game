@@ -513,7 +513,7 @@ Also: `ordering.vitest.ts` was renamed to `ordering.extra.test.ts` on the premis
 - Delete: `src/test/ordering.extra.test.ts`
 - Modify: `docs/superpowers/plans/2026-08-02-correctness-and-cleanup.md`
 
-- [ ] **Step 1: Confirm the file is obsolete, not merely differently titled**
+- [x] **Step 1: Confirm the file is obsolete, not merely differently titled**
 
 The three test titles in `ordering.extra.test.ts` do **not** appear in `ordering.test.ts` — this was checked, and it is expected. They are unique because they describe behaviour that no longer exists, not because they cover anything new.
 
@@ -536,13 +536,13 @@ grep -o "it('[^']*'" src/test/ordering.test.ts | grep -ci "eliminated players to
 
 Expected: a non-zero count for the first (fixed-order assertions present, so the file is the stale one) and `1` for the second (the partition contract is covered). If the second returns `0`, stop — the partition contract would be lost, and it must be ported to `ordering.test.ts` in a randomization-agnostic form before deleting.
 
-- [ ] **Step 2: Delete the redundant file**
+- [x] **Step 2: Delete the redundant file**
 
 ```bash
 git rm src/test/ordering.extra.test.ts
 ```
 
-- [ ] **Step 3: Correct the plan document**
+- [x] **Step 3: Correct the plan document**
 
 In `docs/superpowers/plans/2026-08-02-correctness-and-cleanup.md`:
 
@@ -552,7 +552,7 @@ In `docs/superpowers/plans/2026-08-02-correctness-and-cleanup.md`:
 - Task 5 Step 4: change "4 players, 1 undercover, 1 Mr. White" to **"5 players, 1 undercover, 1 Mr. White"**.
 - Done criteria: change "A 4-player game" to "A 5-player game", and the test total to reflect this plan's final count.
 
-- [ ] **Step 4: Run the four win outcomes for real**
+- [x] **Step 4: Run the four win outcomes for real**
 
 Run `npm run dev` and play a **5-player** game with 1 undercover and 1 Mr. White four times, forcing each ending:
 
@@ -563,13 +563,13 @@ Run `npm run dev` and play a **5-player** game with 1 undercover and 1 Mr. White
 
 Expected: each ends immediately on the correct screen with the correct winner. Outcome 4 must **not** run an extra description round after the last civilian falls.
 
-- [ ] **Step 5: Final verification**
+- [x] **Step 5: Final verification**
 
 Run: `npx vitest run && npx tsc -b --force --noEmit && npm run build`
 
 Expected: 32 passing (35 minus the 3 deleted), clean typecheck, successful build.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
