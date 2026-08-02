@@ -41,7 +41,6 @@ function App() {
     return player || undefined;
   };
   const isCardAvailable = (cardIndex: number) => GameLogic.isCardAvailable(gameState.players, cardIndex);
-  const getOrderedPlayers = () => GameLogic.getOrderedPlayers(gameState.players);
   const getDescriptionPhaseOrder = () => GameLogic.getDescriptionPhaseOrder(gameState.players);
   const getVotingPhaseOrder = () => GameLogic.getVotingPhaseOrder(gameState.players);
   const getActivePlayers = () => GameLogic.getActivePlayers(gameState.players);

@@ -21,7 +21,7 @@ export const GameStatus: React.FC<GameStatusProps> = React.memo(({
   };
 
   const getLabel = () => {
-    return variant === 'elimination' ? 'Penyusup tersisa' : 'Penyusup tersisa';
+    return variant === 'elimination' ? 'Sisa penyusup' : 'Penyusup tersisa';
   };
 
   return (

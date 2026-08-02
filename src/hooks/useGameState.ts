@@ -152,13 +152,6 @@ export const useGameState = () => {
     return !gameState.players.some(p => p.cardIndex === cardIndex);
   };
 
-  // Get ordered players
-  const getOrderedPlayers = () => {
-    return gameState.playerOrder.map(playerNum => 
-      gameState.players.find(p => p.id === playerNum)
-    ).filter(Boolean) as Player[];
-  };
-
   // Get active players
   const getActivePlayers = () => {
     return gameState.players.filter(p => !p.isEliminated);
@@ -218,7 +211,6 @@ export const useGameState = () => {
     getCurrentPlayer,
     getPlayerByCardIndex,
     isCardAvailable,
-    getOrderedPlayers,
     getActivePlayers,
     getRemainingCounts,
     checkWinConditions,

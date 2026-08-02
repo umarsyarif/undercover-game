@@ -177,7 +177,7 @@ git commit -m "fix: stop logging player roles to the console"
 - Modify: `src/App.tsx:44`
 - Modify: `src/hooks/useGameState.ts:155-160,221`
 
-- [ ] **Step 1: Fix the label**
+- [x] **Step 1: Fix the label**
 
 In `src/components/GameStatus.tsx`, replace:
 
@@ -195,7 +195,7 @@ with:
   };
 ```
 
-- [ ] **Step 2: Delete the unused helper in App.tsx**
+- [x] **Step 2: Delete the unused helper in App.tsx**
 
 In `src/App.tsx`, delete line 44:
 
@@ -203,7 +203,7 @@ In `src/App.tsx`, delete line 44:
   const getOrderedPlayers = () => GameLogic.getOrderedPlayers(gameState.players);
 ```
 
-- [ ] **Step 3: Delete the unused helper in useGameState.ts**
+- [x] **Step 3: Delete the unused helper in useGameState.ts**
 
 In `src/hooks/useGameState.ts`, delete this block (lines 155-160):
 
@@ -218,19 +218,19 @@ In `src/hooks/useGameState.ts`, delete this block (lines 155-160):
 
 and remove `getOrderedPlayers,` from the returned object (line 221).
 
-- [ ] **Step 4: Typecheck**
+- [x] **Step 4: Typecheck**
 
 Run: `npx tsc -b --noEmit`
 
 Expected: clean. If it complains that the `Player` import is now unused in `useGameState.ts`, remove `Player` from that import line.
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 Run: `npx vitest run`
 
 Expected: 38 passing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/GameStatus.tsx src/App.tsx src/hooks/useGameState.ts
