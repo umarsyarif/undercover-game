@@ -157,7 +157,7 @@ Expected: no output.
 
 Run: `npx tsc -b --noEmit && npx vitest run`
 
-Expected: clean typecheck, 38 tests passing.
+Expected: clean typecheck, 28 tests passing.
 
 - [x] **Step 6: Commit**
 
@@ -228,7 +228,7 @@ Expected: clean. If it complains that the `Player` import is now unused in `useG
 
 Run: `npx vitest run`
 
-Expected: 38 passing.
+Expected: 28 passing.
 
 - [x] **Step 6: Commit**
 
