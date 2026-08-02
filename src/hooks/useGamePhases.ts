@@ -142,12 +142,9 @@ export const useGamePhases = (
 
   // Handle Mr. White guess
   const handleMrWhiteGuess = useCallback(() => {
-    console.log('Mr. White guess function called');
-    console.log('Current guess:', gameState.mrWhiteGuess);
-    console.log('Civilian word:', gameState.gameWords.civilian);
-    
-    const isCorrect = gameState.mrWhiteGuess.toLowerCase().trim() === gameState.gameWords.civilian.toLowerCase().trim();
-    console.log('Is guess correct:', isCorrect);
+    const isCorrect =
+      gameState.mrWhiteGuess.toLowerCase().trim() ===
+      gameState.gameWords.civilian.toLowerCase().trim();
     
     if (isCorrect) {
       // Mr. White wins

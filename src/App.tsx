@@ -392,12 +392,7 @@ function App() {
                   onKeyPress={(e) => e.key === 'Enter' && gameState.mrWhiteGuess.trim() && gamePhases.handleMrWhiteGuess()}
                 />
                 <Button
-                  onClick={() => {
-                    console.log('Button clicked!');
-                    console.log('Button disabled:', !gameState.mrWhiteGuess.trim());
-                    console.log('Current input value:', gameState.mrWhiteGuess);
-                    gamePhases.handleMrWhiteGuess();
-                  }}
+                  onClick={gamePhases.handleMrWhiteGuess}
                   disabled={!gameState.mrWhiteGuess.trim()}
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-full text-lg"
                 >

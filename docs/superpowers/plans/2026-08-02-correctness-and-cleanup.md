@@ -95,7 +95,7 @@ git commit -m "test: run under jsdom and un-hide the ordering suite"
 - Modify: `src/App.tsx:395-399`
 - Modify: `src/hooks/useGamePhases.ts:144-150`
 
-- [ ] **Step 1: Delete the role leak**
+- [x] **Step 1: Delete the role leak**
 
 In `src/services/gameLogic.ts`, delete line 48 entirely:
 
@@ -105,7 +105,7 @@ In `src/services/gameLogic.ts`, delete line 48 entirely:
 
 The surrounding code (the role-shuffle loop above it, the player-creation loop below) is unchanged.
 
-- [ ] **Step 2: Simplify the Mr. White button handler**
+- [x] **Step 2: Simplify the Mr. White button handler**
 
 In `src/App.tsx`, replace this `onClick`:
 
@@ -124,7 +124,7 @@ with:
                   onClick={gamePhases.handleMrWhiteGuess}
 ```
 
-- [ ] **Step 3: Strip the guess-handler logs**
+- [x] **Step 3: Strip the guess-handler logs**
 
 In `src/hooks/useGamePhases.ts`, replace the opening of `handleMrWhiteGuess`:
 
@@ -147,19 +147,19 @@ with:
       gameState.gameWords.civilian.toLowerCase().trim();
 ```
 
-- [ ] **Step 4: Verify no console calls remain in game source**
+- [x] **Step 4: Verify no console calls remain in game source**
 
 Run: `grep -rn "console\.log" src/services src/hooks src/components src/App.tsx`
 
 Expected: no output.
 
-- [ ] **Step 5: Typecheck and test**
+- [x] **Step 5: Typecheck and test**
 
 Run: `npx tsc -b --noEmit && npx vitest run`
 
 Expected: clean typecheck, 38 tests passing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/services/gameLogic.ts src/App.tsx src/hooks/useGamePhases.ts
