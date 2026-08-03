@@ -23,13 +23,13 @@ const WordApiResponseSchema = z.object({
 });
 
 // Default word pairs
-const defaultWords: WordPair[] = [
-  { civilian: 'Apel', undercover: 'Jeruk', played: false },
-  { civilian: 'Kucing', undercover: 'Anjing', played: false },
-  { civilian: 'Mobil', undercover: 'Motor', played: false },
-  { civilian: 'Kopi', undercover: 'Teh', played: false },
-  { civilian: 'Buku', undercover: 'Majalah', played: false },
-];
+/**
+ * The pool starts empty. A new player fetches their own words from the AI
+ * rather than inheriting a fixed set — a handful of seeded pairs meant every
+ * group's first few rounds were identical, and they polluted the `avoid` list
+ * so the model kept regenerating them.
+ */
+const defaultWords: WordPair[] = [];
 
 export class WordService {
   // Initialize words in localStorage if not exists

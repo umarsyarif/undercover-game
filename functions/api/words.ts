@@ -4,10 +4,11 @@ import {
   APIUserAbortError,
   BadRequestError,
   InternalServerError,
+  PermissionDeniedError,
   RateLimitError,
 } from 'openai/core/error';
 import { z } from 'zod';
-import { WORD_PROMPT, buildInput } from './prompt';
+import { WORD_PROMPT, buildInput, pickCategories } from './prompt';
 import {
   MAX_WORDS_PER_REQUEST,
   MAX_AVOID_ENTRIES,
@@ -78,8 +79,16 @@ const sanitize = (word: string) => word.replace(/[^\p{L}\s-]/gu, '').trim();
  * Not every OpenAI-compatible backend honours `strict`. Some wrap the JSON in a
  * markdown fence. Strip it before parsing rather than trusting the contract.
  */
-const stripFence = (text: string) =>
-  text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+const stripFence = (text: string) => {
+  const bare = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  if (bare.startsWith('{')) return bare;
+
+  // Some backends ignore response_format entirely and wrap the JSON in prose.
+  // Recover the outermost object rather than failing the whole request.
+  const first = bare.indexOf('{');
+  const last = bare.lastIndexOf('}');
+  return first !== -1 && last > first ? bare.slice(first, last + 1) : bare;
+};
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const raw = await context.request.text();
@@ -108,7 +117,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       max_tokens: 8000,
       messages: [
         { role: 'system', content: WORD_PROMPT },
-        { role: 'user', content: buildInput(body.count, avoid) },
+        { role: 'user', content: buildInput(body.count, avoid, pickCategories(body.count)) },
       ],
       response_format: {
         type: 'json_schema',
@@ -161,7 +170,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       err instanceof RateLimitError ||
       err instanceof InternalServerError ||
       err instanceof APIConnectionError ||
-      err instanceof APIUserAbortError
+      err instanceof APIUserAbortError ||
+      // A router does not preserve the upstream status. 9router surfaces an
+      // upstream 429 as its own 403, so PermissionDeniedError in practice
+      // means "the provider refused" — quota, billing, or a bad key — not
+      // that our request was malformed. All of those are retry-later from a
+      // player's point of view; the real cause is in console.error above.
+      err instanceof PermissionDeniedError
     ) {
       return fail('upstream_error', 502);
     }

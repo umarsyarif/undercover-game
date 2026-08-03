@@ -41,8 +41,21 @@ describe('WordService', () => {
 
   afterEach(() => localStorageMock.clear());
 
+  describe('a fresh install', () => {
+    it('starts with an empty pool so the first player must fetch', () => {
+      expect(WordService.getTotalWordCount()).toBe(0);
+      expect(WordService.getUnplayedWords()).toEqual([]);
+      expect(WordService.areAllWordsPlayed()).toBe(true);
+    });
+  });
+
   describe('fetchNewWords', () => {
     it('posts to the same-origin endpoint with count and avoid', async () => {
+      // The pool now starts empty, so seed the words this test asserts on.
+      localStorageMock.setItem(
+        'gameWords',
+        JSON.stringify([{ civilian: 'Apel', undercover: 'Jeruk', played: false }])
+      );
       respondWith({ data: [{ civilian: 'Bakso', undercover: 'Siomay' }] });
 
       await WordService.fetchNewWords(1);
@@ -53,7 +66,6 @@ describe('WordService', () => {
 
       const sent = JSON.parse(init.body);
       expect(sent.count).toBe(1);
-      // The 5 seeded defaults contribute both halves.
       expect(sent.avoid).toContain('Apel');
       expect(sent.avoid).toContain('Jeruk');
     });
@@ -131,13 +143,22 @@ describe('WordService', () => {
   });
 
   describe('addNewWords', () => {
+    beforeEach(() => {
+      // The pool starts empty now, so the dedupe cases need a pair to collide
+      // with. Without this they would pass trivially by adding it.
+      localStorageMock.setItem(
+        'gameWords',
+        JSON.stringify([{ civilian: 'Kopi', undercover: 'Teh', played: false }])
+      );
+    });
+
     it('reports how many were actually added', () => {
       const added = WordService.addNewWords([
         { civilian: 'Bakso', undercover: 'Siomay', played: false },
       ]);
 
       expect(added).toBe(1);
-      expect(WordService.getTotalWordCount()).toBe(6);
+      expect(WordService.getTotalWordCount()).toBe(2);
     });
 
     it('drops a pair that already exists', () => {
@@ -146,7 +167,7 @@ describe('WordService', () => {
       ]);
 
       expect(added).toBe(0);
-      expect(WordService.getTotalWordCount()).toBe(5);
+      expect(WordService.getTotalWordCount()).toBe(1);
     });
 
     it('drops a pair that exists reversed', () => {

@@ -182,6 +182,20 @@ describe('POST /api/words', () => {
     expect((await bodyOf(res)).error).toBe('upstream_error');
   });
 
+  it('maps a router 403 to upstream_error, since it can wrap an upstream 429', async () => {
+    // 9router surfaced a Gemini quota 429 as its own 403. Reporting that as
+    // server_error told the player to give up when they should retry.
+    const { PermissionDeniedError } = await import('openai/core/error');
+    createMock.mockRejectedValueOnce(
+      new PermissionDeniedError(403, undefined, 'quota exceeded', new Headers())
+    );
+
+    const res = await call({ count: 1 });
+
+    expect(res.status).toBe(502);
+    expect((await bodyOf(res)).error).toBe('upstream_error');
+  });
+
   it('maps a 400 from upstream to server_error, not upstream_error', async () => {
     const { BadRequestError } = await import('openai/core/error');
     createMock.mockRejectedValueOnce(

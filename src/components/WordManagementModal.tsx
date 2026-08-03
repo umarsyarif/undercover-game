@@ -81,17 +81,22 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
   const totalWords = WordService.getTotalWordCount();
   const playedWords = WordService.getPlayedWordCount();
 
+  // A fresh install has no words at all. That is a different situation from
+  // having exhausted a pool, and "reuse the old ones" has nothing to reuse.
+  const isFirstRun = totalWords === 0;
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md mx-auto">
         <DialogHeader>
           <DialogTitle className="text-center text-xl">
-            🎯 Semua Kata Sudah Dipakai!
+            {isFirstRun ? '👋 Belum Ada Kata' : '🎯 Semua Kata Sudah Dipakai!'}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Statistics */}
+          {!isFirstRun && (
           <Card className="p-4 bg-blue-50 border-blue-200">
             <div className="text-center">
               <p className="text-sm text-gray-600 mb-2">Statistik Kata</p>
@@ -108,12 +113,15 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
               </div>
             </div>
           </Card>
+          )}
 
           {!showNumberInput ? (
             <>
               <div className="text-center">
                 <p className="text-gray-600 mb-6">
-                  Semua pasangan kata sudah dipakai. Pilih salah satu:
+                  {isFirstRun
+                    ? 'Ambil pasangan kata dari AI dulu untuk mulai bermain.'
+                    : 'Semua pasangan kata sudah dipakai. Pilih salah satu:'}
                 </p>
               </div>
 
@@ -127,14 +135,16 @@ export const WordManagementModal: React.FC<WordManagementModalProps> = ({
                   Ambil Kata Baru dari AI
                 </Button>
 
-                <Button
-                  onClick={handleReuseWords}
-                  variant="outline"
-                  className="w-full py-4 rounded-xl flex items-center justify-center gap-2 border-2 border-blue-300 hover:bg-blue-50"
-                >
-                  <RefreshCw className="h-5 w-5" />
-                  Pakai Ulang Kata Lama
-                </Button>
+                {!isFirstRun && (
+                  <Button
+                    onClick={handleReuseWords}
+                    variant="outline"
+                    className="w-full py-4 rounded-xl flex items-center justify-center gap-2 border-2 border-blue-300 hover:bg-blue-50"
+                  >
+                    <RefreshCw className="h-5 w-5" />
+                    Pakai Ulang Kata Lama
+                  </Button>
+                )}
               </div>
             </>
           ) : (
