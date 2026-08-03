@@ -29,14 +29,6 @@ ATURAN TAMBAHAN:
 - Kedua kata dalam satu pasangan tidak boleh sama.
 - Semua pasangan harus berbeda satu sama lain.
 
-FORMAT JAWABAN — WAJIB.
-Jawab HANYA dengan JSON mentah. Tanpa kalimat pembuka, tanpa penjelasan,
-tanpa penomoran, tanpa markdown, tanpa tanda \`\`\`.
-Karakter pertama jawabanmu harus { dan karakter terakhir harus }.
-
-Bentuk persis seperti ini:
-{"pairs":[{"civilian":"Kopi","undercover":"Teh"},{"civilian":"Sapu","undercover":"Pel"}]}
-
 FORMAT OUTPUT:
 Balas hanya dengan JSON:
 {"pairs":[{"civilian":"...","undercover":"..."}]}
