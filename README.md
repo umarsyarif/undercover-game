@@ -27,7 +27,7 @@ For detailed game rules, see [GAME_RULE.md](docs/GAME_RULE.md).
 
 ### Prerequisites
 
-- Node.js (v16+)
+- Node.js (v22+; required by the pinned Wrangler version)
 - npm or yarn
 
 ### Installation
@@ -45,11 +45,18 @@ yarn
 
 ### Environment Variables
 
-Create a `.env` file in the root directory:
+No environment variables are needed for local UI work.
+
+To exercise the AI word generation locally, create a `.dev.vars` file (gitignored):
 
 ```
-VITE_WORD_API_ENDPOINT=http://your-api-endpoint/api/words
+AI_BASE_URL=https://9router.umeh.me/v1
+AI_API_KEY=...
+AI_MODEL=...
 ```
+
+then run `npm run dev` and `npm run dev:pages` in separate terminals and open
+http://localhost:8788.
 
 ### Running Locally
 
@@ -71,36 +78,7 @@ yarn build
 
 ## Deployment
 
-The application can be deployed using Docker and Docker Compose. It's designed to work with Traefik as a reverse proxy for automatic SSL and subdomain routing.
-
-### With Existing Traefik
-
-If you already have Traefik running on your server (managing other applications):
-
-1. Simply run the deployment script:
-   ```bash
-   ./deploy.sh
-   ```
-
-2. The script will automatically detect your existing Traefik network and connect to it.
-
-### Without Existing Traefik
-
-If you don't have Traefik running yet:
-
-1. Use the included Traefik configuration:
-   ```bash
-   # Create the network
-   docker network create traefik-public
-   
-   # Start Traefik (after updating your email in docker/traefik.yml)
-   docker-compose -f docker/traefik-compose.yml up -d
-   
-   # Deploy the application
-   docker-compose up -d
-   ```
-
-For detailed deployment instructions, see [DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Cloudflare Pages. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Architecture
 

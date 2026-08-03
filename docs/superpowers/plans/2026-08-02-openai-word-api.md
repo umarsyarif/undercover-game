@@ -1317,23 +1317,23 @@ player with nothing."
 - Modify: `.env`, `README.md`
 - Rewrite: `docs/DEPLOYMENT.md`
 
-- [ ] **Step 1: Delete the deploy machinery**
+- [x] **Step 1: Delete the deploy machinery**
 
 ```bash
 git rm -r Dockerfile nginx.conf docker-compose.yml deploy.sh docker/
 ```
 
-- [ ] **Step 2: Drop the dead env var**
+- [x] **Step 2: Drop the dead env var**
 
 `.env` is gitignored, so edit it locally: delete the `VITE_WORD_API_ENDPOINT` line. The file can be left empty.
 
-- [ ] **Step 3: Confirm nothing still reads it**
+- [x] **Step 3: Confirm nothing still reads it**
 
 Run: `grep -rn "VITE_WORD_API_ENDPOINT" src/ functions/ docs/ README.md`
 
 Expected: only hits in `README.md` and `docs/DEPLOYMENT.md`, both rewritten below. Any hit under `src/` or `functions/` is a bug.
 
-- [ ] **Step 4: Rewrite the deployment doc**
+- [x] **Step 4: Rewrite the deployment doc**
 
 Replace `docs/DEPLOYMENT.md` entirely:
 
@@ -1414,7 +1414,7 @@ code), add a WAF rate-limiting rule on `/api/words` (free plan allows one rule,
 path-only, IP-keyed, fixed 10s window), or add Turnstile.
 ````
 
-- [ ] **Step 5: Fix the README**
+- [x] **Step 5: Fix the README**
 
 In `README.md`, replace the **Environment Variables** block under Development:
 
@@ -1443,13 +1443,13 @@ and replace the whole **Deployment** section with a pointer:
 Cloudflare Pages. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 ```
 
-- [ ] **Step 6: Build and test**
+- [x] **Step 6: Build and test**
 
 Run: `npm run build && npx vitest run`
 
 Expected: successful build, 56 passing.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A

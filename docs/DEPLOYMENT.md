@@ -1,144 +1,74 @@
-# Deployment Guide for Undercover Game
+# Deployment
 
-This guide explains how to deploy the Undercover Game application using Docker and Docker Compose with a custom subdomain using an existing Traefik instance.
+The app is a static Vite build plus one Cloudflare Pages Function, deployed as a
+single Cloudflare Pages project.
 
-## Prerequisites
+## Production
 
-- Docker
-- Docker Compose
-- Existing Traefik instance running on your server
-- Domain name pointing to your server
+- Project: `undercover-game`
+- Domain: `undercover.umeh.me`
+- Build command: `npm run build`
+- Output directory: `dist`
+- Node version: 20
 
-## Environment Variables
+## Secrets
 
-The application requires the following environment variable:
+Three, set in the Pages dashboard under **Settings → Variables and Secrets**
+with the **Encrypt** option on, for both the Production and Preview
+environments:
 
-- `VITE_WORD_API_ENDPOINT`: URL to your word pairs API endpoint
+| Name | Example | Purpose |
+|---|---|---|
+| `AI_BASE_URL` | `https://9router.umeh.me/v1` | Any OpenAI-compatible endpoint |
+| `AI_API_KEY` | — | Bearer token for that endpoint |
+| `AI_MODEL` | — | Model name the endpoint expects |
 
-For security, this variable is passed as a build argument and not exposed in the runtime environment.
+None reach the browser — only `functions/api/words.ts` reads them, via
+`context.env`.
 
-## Deployment with Existing Traefik
+Because the provider is configuration, switching from 9router to OpenAI direct
+(or anywhere else) is three dashboard edits and a redeploy. No code change.
 
-This setup assumes you already have [Traefik](https://traefik.io/) running on your server and handling other applications.
+## Deploying
 
-### 1. Find Your Traefik Network
-
-First, you need to identify which Docker network your Traefik instance is using:
-
-```bash
-docker network ls
-```
-
-Look for a network that contains "traefik" in its name, or the network you know your Traefik is connected to.
-
-### 2. Create a `.env` file with your API endpoint
-
-Create a `.env` file in the root directory of your project:
-
-```
-VITE_WORD_API_ENDPOINT=https://your-secure-api-endpoint.com/api/words
-```
-
-This environment variable will be used during the build process but won't be exposed in the final container.
-
-### 3. Deploy the Undercover Game
-
-The deployment script will automatically detect your Traefik network and connect to it:
+Pushes to `main` deploy automatically through the Git integration. To deploy by
+hand:
 
 ```bash
-./deploy.sh
+npm run build
+npx wrangler pages deploy dist --project-name=undercover-game
 ```
 
-If the script cannot find your Traefik network automatically, it will prompt you to enter the network name.
+## Local development
 
-The application will be available at `https://undercover.umarsyariif.site` once DNS propagation is complete.
-
-## Manual Deployment
-
-If you prefer to deploy manually:
-
-1. Update the `docker-compose.yml` file to use your Traefik network:
-```yaml
-networks:
-  traefik-public:  # Replace with your Traefik network name
-    external: true
-```
-
-2. Deploy the application:
-```bash
-docker-compose up -d
-```
-
-## DNS Configuration
-
-Ensure your DNS settings include an A record for `undercover.umarsyariif.site` pointing to your server's IP address.
-
-## Traefik Configuration
-
-Your existing Traefik instance should already be configured for:
-
-1. Automatic SSL certificate generation via Let's Encrypt
-2. HTTP to HTTPS redirection
-3. Proper routing based on hostnames
-
-If you need to make any Traefik-specific adjustments, you can modify the labels in the `docker-compose.yml` file:
-
-```yaml
-labels:
-  - "traefik.enable=true"
-  - "traefik.http.routers.undercover.rule=Host(`undercover.umarsyariif.site`)"
-  - "traefik.http.routers.undercover.entrypoints=websecure"
-  - "traefik.http.routers.undercover.tls.certresolver=letsencrypt"
-  - "traefik.http.services.undercover.loadbalancer.server.port=80"
-```
-
-Make sure these labels match your Traefik configuration, especially:
-- The `entrypoints` value should match your secure entrypoint name
-- The `certresolver` value should match your certificate resolver name
-
-## Security Considerations
-
-### API Endpoint Security
-
-The API endpoint is injected at build time and not exposed in the runtime environment. This means:
-
-1. The endpoint URL is not visible in the browser's network requests
-2. It's not accessible in the client-side JavaScript
-3. It's compiled into the application bundle
-
-For additional security:
-
-- Implement API key authentication
-- Set up CORS restrictions on your API server
-- Consider rate limiting to prevent abuse
-
-## Troubleshooting
-
-### Application Issues
+The Vite dev server does not serve `/api/words`. Two terminals:
 
 ```bash
-# Check the logs of the Undercover Game container
-docker logs undercover-game
+npm run dev        # Vite on :5173
+npm run dev:pages  # wrangler proxying Vite, on :8788
 ```
 
-### Traefik Routing Issues
+Develop against **http://localhost:8788**. Opening :5173 works for UI, but every
+call to `/api/words` will 404.
 
-```bash
-# Check the logs of your Traefik container
-docker logs <your-traefik-container-name>
+Put the three values in `.dev.vars` (gitignored):
+
+```
+AI_BASE_URL=https://9router.umeh.me/v1
+AI_API_KEY=...
+AI_MODEL=...
 ```
 
-## Updating the Application
+## Known limits
 
-To update the application:
+`/api/words` is public and unauthenticated. The Workers free plan caps the
+account at 100,000 requests/day, which at roughly $0.001 per generation bounds
+worst-case spend at about $90/day. That cap is shared with every other Worker
+and Pages Function on the account, including the portfolio site on the apex.
 
-1. Pull the latest changes:
-```bash
-git pull
-```
+Note that `AI_API_KEY` reaches a router that fans out to many providers, so a
+drain here is not scoped to one provider's quota.
 
-2. Rebuild with the latest environment variables:
-```bash
-docker-compose down
-docker-compose up -d --build
-``` 
+If abuse becomes a problem: set a spend cap on the upstream provider account (no
+code), add a WAF rate-limiting rule on `/api/words` (free plan allows one rule,
+path-only, IP-keyed, fixed 10s window), or add Turnstile.
