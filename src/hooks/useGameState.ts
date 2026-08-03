@@ -175,17 +175,21 @@ export const useGameState = () => {
   };
 
   // Check win conditions
+  /**
+   * Ends the game. Every path that reaches game-over must go through here —
+   * marking the pair as played is what stops "Lanjut" drawing it again, and a
+   * path that sets phase: 'game-over' directly will silently recycle words.
+   */
+  const declareWinner = (winner: 'civilian' | 'undercover' | 'mrwhite') => {
+    WordService.markWordAsPlayed(gameState.gameWords.civilian, gameState.gameWords.undercover);
+    updateGameState({ winner, phase: 'game-over' });
+  };
+
   const checkWinConditions = () => {
     const winner = GameLogic.checkWinConditions(gameState.players);
 
     if (winner) {
-      // Mark current word pair as played when game ends
-      WordService.markWordAsPlayed(gameState.gameWords.civilian, gameState.gameWords.undercover);
-
-      updateGameState({
-        winner,
-        phase: 'game-over'
-      });
+      declareWinner(winner);
     }
 
     return winner;
@@ -203,6 +207,7 @@ export const useGameState = () => {
     getActivePlayers,
     getRemainingCounts,
     checkWinConditions,
+    declareWinner,
     getRandomWordPair
   };
 };

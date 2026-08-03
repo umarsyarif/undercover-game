@@ -41,6 +41,7 @@ describe('turn modal announces the NEXT player', () => {
         stateWith(players, currentPlayerIndex),
         vi.fn(),
         vi.fn(),
+        vi.fn(),
         openModal,
         vi.fn()
       )

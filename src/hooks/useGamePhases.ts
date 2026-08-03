@@ -7,6 +7,7 @@ export const useGamePhases = (
   gameState: GameState,
   updateGameState: (updates: Partial<GameState>) => void,
   checkWinConditions: () => 'civilian' | 'undercover' | 'mrwhite' | null,
+  declareWinner: (winner: 'civilian' | 'undercover' | 'mrwhite') => void,
   openModal: (modalName: ModalName) => void,
   closeModal: (modalName: ModalName) => void
 ) => {
@@ -163,7 +164,9 @@ export const useGamePhases = (
       gameState.mrWhiteGuess.toLowerCase().trim() ===
       gameState.gameWords.civilian.toLowerCase().trim();
     if (isCorrect) {
-      updateGameState({ winner: 'mrwhite', phase: 'game-over' });
+      // declareWinner, not updateGameState — ending the game must also mark the
+      // pair as played, or "Lanjut" can draw it again.
+      declareWinner('mrwhite');
       openModal('showGameOverModal');
       return;
     }
@@ -189,7 +192,8 @@ export const useGamePhases = (
     gameState.round,
     updateGameState,
     openModal,
-    checkWinConditions
+    checkWinConditions,
+    declareWinner
   ]);
 
   // Handle phase transitions

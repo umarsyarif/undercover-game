@@ -20,7 +20,7 @@ import type { Player } from './types/gameTypes';
 
 function App() {
   // Initialize custom hooks
-  const { gameState, updateGameState, initializeGame, resetGame, checkWinConditions, getRandomWordPair } = useGameState();
+  const { gameState, updateGameState, initializeGame, resetGame, checkWinConditions, declareWinner, getRandomWordPair } = useGameState();
   const { modals, openModal, closeModal, closeAllModals } = useModalManager();
   const playerManagement = usePlayerManagement();
   const wordManagement = useWordManagement();
@@ -30,6 +30,7 @@ function App() {
     gameState,
     updateGameState,
     checkWinConditions,
+    declareWinner,
     openModal,
     closeModal
   );
