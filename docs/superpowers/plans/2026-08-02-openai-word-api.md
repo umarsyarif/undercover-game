@@ -1464,7 +1464,7 @@ umarsyariif.site no longer resolves, so this path was already dead."
 
 Do this **before** Task 9 — confirm a working preview while the old machinery is still in the tree.
 
-- [ ] **Step 1: Create the Pages project**
+- [x] **Step 1: Create the Pages project**
 
 In the Cloudflare dashboard: **Workers & Pages → Create → Pages → Connect to Git**, select this repository.
 
@@ -1472,7 +1472,10 @@ In the Cloudflare dashboard: **Workers & Pages → Create → Pages → Connect 
 - Output directory: `dist`
 - Environment variable: `NODE_VERSION` = `20`
 
-- [ ] **Step 2: Add the three secrets**
+- [x] **Step 2: Add the three secrets**
+
+Production has all three values encrypted. Preview was deliberately left with
+only `NODE_VERSION` by user authorization.
 
 **Settings → Variables and Secrets → Add**, choosing **Encrypt** for each, in both Production and Preview:
 
@@ -1484,11 +1487,16 @@ In the Cloudflare dashboard: **Workers & Pages → Create → Pages → Connect 
 
 If a call later fails with `server_error` and the log shows a `BadRequestError`, the most likely causes are a model name the router does not recognise or a backend that rejects `response_format`. Check the logged error before assuming the model is at fault.
 
-- [ ] **Step 3: Deploy a preview**
+- [x] **Step 3: Deploy a preview**
+
+The feature branch was temporarily selected as the production branch and
+verified at `e2b8e625.undercover-game-eyf.pages.dev`, in place of a Preview
+environment deployment. Switch the production branch back to `main` after the
+feature branch is merged.
 
 Push the current branch. Cloudflare builds it and gives a `*.pages.dev` preview URL.
 
-- [ ] **Step 4: Verify the endpoint end to end**
+- [x] **Step 4: Verify the endpoint end to end**
 
 Run, against the preview URL:
 
@@ -1500,7 +1508,7 @@ curl -sS -X POST https://<preview>.pages.dev/api/words \
 
 Expected: `{"data":[{"civilian":"...","undercover":"..."},{...}]}` — two Indonesian pairs.
 
-- [ ] **Step 5: Verify the guardrails**
+- [x] **Step 5: Verify the guardrails**
 
 ```bash
 curl -sS -o /dev/null -w '%{http_code}\n' -X POST https://<preview>.pages.dev/api/words \
@@ -1516,7 +1524,7 @@ curl -sS -X POST https://<preview>.pages.dev/api/words \
 
 Expected: a normal pair response — the injection is stripped and ignored, not obeyed.
 
-- [ ] **Step 6: Verify the UI path**
+- [x] **Step 6: Verify the UI path**
 
 Open the preview URL. In devtools, mark every pair played:
 
@@ -1527,11 +1535,11 @@ localStorage.setItem('gameWords', JSON.stringify(w));
 
 Reload, start a game. Expected: the word-management modal appears; "Ambil Kata Baru dari AI" fetches real pairs and the game starts with one of them.
 
-- [ ] **Step 7: Attach the custom domain**
+- [x] **Step 7: Attach the custom domain**
 
 **Custom domains → Set up a domain →** `undercover.umeh.me`. The zone is already on Cloudflare nameservers, so the proxied CNAME is created automatically. The apex portfolio is a separate project and is not affected.
 
-- [ ] **Step 8: Verify production**
+- [x] **Step 8: Verify production**
 
 ```bash
 curl -sS -o /dev/null -w '%{http_code}\n' https://undercover.umeh.me
@@ -1541,7 +1549,7 @@ curl -sS -X POST https://undercover.umeh.me/api/words \
 
 Expected: `200` and one pair. Confirm `https://umeh.me` still serves the portfolio.
 
-- [ ] **Step 9: Confirm the key is not in the bundle**
+- [x] **Step 9: Confirm the key is not in the bundle**
 
 The base URL, key and model are read only by the function at runtime, so none of them should appear in the client bundle.
 
